@@ -1,0 +1,89 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8]
+  - alert [ref=e11]
+  - main [ref=e12]:
+    - complementary [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - img [ref=e17]
+          - generic [ref=e20]:
+            - paragraph [ref=e21]: Vault
+            - heading "Command Center" [level=1] [ref=e22]
+        - button "My Prompt Vault" [ref=e24]:
+          - text: My Prompt Vault
+          - img [ref=e25]
+      - navigation [ref=e28]:
+        - button "Library" [ref=e29]:
+          - img [ref=e30]
+          - text: Library
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: Pinned Assets
+          - img [ref=e36]
+        - button "Code Architect" [ref=e38]: Code Architect
+        - generic [ref=e39]:
+          - paragraph [ref=e40]: Recent Chats
+          - img [ref=e41]
+        - button "New Conversation" [ref=e43]:
+          - img [ref=e44]
+          - text: New Conversation
+        - paragraph [ref=e47]: Categories
+        - button "Skills" [ref=e48]:
+          - img [ref=e49]
+          - text: Skills
+        - button "Prompts" [ref=e53]:
+          - img [ref=e54]
+          - text: Prompts
+      - button "Settings" [ref=e58]:
+        - img [ref=e59]
+        - text: Settings
+      - button [ref=e62]:
+        - img [ref=e63]
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - heading "My Prompt Vault" [level=2] [ref=e69]
+            - generic [ref=e70]: v1.0.0
+          - generic [ref=e71]:
+            - button "Library" [ref=e72]:
+              - img [ref=e73]
+              - text: Library
+            - button "Chat" [ref=e77]:
+              - img [ref=e78]
+              - text: Chat
+            - button "Import" [ref=e80]:
+              - img [ref=e81]
+              - text: Import
+        - generic [ref=e86]:
+          - button "Export Workspace JSON" [ref=e87] [cursor=pointer]:
+            - img [ref=e88]
+          - button "New Chat" [ref=e91] [cursor=pointer]:
+            - img [ref=e92]
+            - text: New Chat
+          - button "New Asset" [ref=e93] [cursor=pointer]:
+            - img [ref=e94]
+            - text: New Asset
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - generic [ref=e98]:
+            - img [ref=e99]
+            - text: New Conversation
+          - button "COMPILE PROMPT" [ref=e101]:
+            - img [ref=e102]
+            - text: COMPILE PROMPT
+        - generic [ref=e108]:
+          - 'textbox "Type @skills, #prompts..." [active] [ref=e109]': "@Code Architect design a REST API"
+          - generic [ref=e110]:
+            - button [ref=e111]:
+              - img [ref=e112]
+            - button [ref=e115]:
+              - img [ref=e116]
+            - button [ref=e119]:
+              - img [ref=e120]
+          - button [ref=e122] [cursor=pointer]:
+            - img [ref=e123]
+```

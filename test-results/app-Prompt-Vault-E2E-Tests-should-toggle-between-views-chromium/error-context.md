@@ -1,0 +1,71 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8]
+  - alert [ref=e11]
+  - main [ref=e12]:
+    - complementary [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - img [ref=e17]
+          - generic [ref=e20]:
+            - paragraph [ref=e21]: Vault
+            - heading "Command Center" [level=1] [ref=e22]
+        - button "My Prompt Vault" [ref=e24]:
+          - text: My Prompt Vault
+          - img [ref=e25]
+      - navigation [ref=e28]:
+        - button "Library" [ref=e29]:
+          - img [ref=e30]
+          - text: Library
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: Pinned Assets
+          - img [ref=e36]
+        - button "Code Architect" [ref=e38]: Code Architect
+        - generic [ref=e39]:
+          - paragraph [ref=e40]: Recent Chats
+          - img [ref=e41]
+        - paragraph [ref=e43]: Categories
+        - button "Skills" [ref=e44]:
+          - img [ref=e45]
+          - text: Skills
+        - button "Prompts" [ref=e49]:
+          - img [ref=e50]
+          - text: Prompts
+      - button "Settings" [ref=e54]:
+        - img [ref=e55]
+        - text: Settings
+      - button [ref=e58]:
+        - img [ref=e59]
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - heading "My Prompt Vault" [level=2] [ref=e65]
+            - generic [ref=e66]: v1.0.0
+          - generic [ref=e67]:
+            - button "Library" [ref=e68]:
+              - img [ref=e69]
+              - text: Library
+            - button "Chat" [active] [ref=e73]:
+              - img [ref=e74]
+              - text: Chat
+            - button "Import" [ref=e76]:
+              - img [ref=e77]
+              - text: Import
+        - generic [ref=e82]:
+          - button "Export Workspace JSON" [ref=e83] [cursor=pointer]:
+            - img [ref=e84]
+          - button "New Chat" [ref=e87] [cursor=pointer]:
+            - img [ref=e88]
+            - text: New Chat
+          - button "New Asset" [ref=e89] [cursor=pointer]:
+            - img [ref=e90]
+            - text: New Asset
+      - generic [ref=e92]:
+        - img [ref=e93]
+        - heading "No active chat" [level=3] [ref=e95]
+        - paragraph [ref=e96]: Start a new thread to begin engineering prompts.
+```
