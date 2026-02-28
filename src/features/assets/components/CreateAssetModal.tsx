@@ -1,34 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { useStore } from "@/store/useStore";
 import { useStorageActions } from "@/lib/storage-helpers";
-import { AssetType } from "@/schemas/models";
-import { X } from "lucide-react";
+import { useStore } from "@/store/useStore";
+import { X, Plus, Workflow, TerminalSquare, Box } from "lucide-react";
+import type { AssetType } from "@/schemas/models";
 
-export function CreateAssetModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+interface CreateAssetModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  defaultType?: AssetType;
+}
+
+export function CreateAssetModal({ isOpen, onClose, defaultType = "prompt" }: CreateAssetModalProps) {
+  const [name, setName] = useState("");
+  const [content, setContent] = useState("");
+  const [type, setType] = useState<AssetType>(defaultType);
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const { addAsset } = useStorageActions();
-  
-  const [name, setName] = useState("");
-  const [type, setType] = useState<AssetType>("prompt");
-  const [content, setContent] = useState("");
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeWorkspaceId) return;
+  const handleCreate = () => {
+    if (!name.trim() || !activeWorkspaceId) return;
 
     const newAsset = {
       id: crypto.randomUUID(),
-      name,
+      name: name.trim(),
       type,
-      content,
+      content: content.trim(),
       workspaceId: activeWorkspaceId,
       tags: [],
+      pinned: false,
       createdAt: Date.now(),
-      updatedAt: Date.now(), pinned: false,
+      updatedAt: Date.now(),
     };
 
     addAsset(newAsset);
@@ -37,57 +40,76 @@ export function CreateAssetModal({ isOpen, onClose }: { isOpen: boolean; onClose
     setContent("");
   };
 
+  if (!isOpen) return null;
+
+  const typeOptions: { value: AssetType; label: string; icon: React.ReactNode }[] = [
+    { value: "skill", label: "Skill", icon: <Workflow className="h-4 w-4" /> },
+    { value: "prompt", label: "Prompt", icon: <TerminalSquare className="h-4 w-4" /> },
+    { value: "workflow", label: "Workflow", icon: <Box className="h-4 w-4" /> },
+  ];
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="cc-glass w-full max-w-lg rounded-3xl p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold">New Asset</h3>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="cc-glass w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl border-[var(--line-strong)]">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--line)]">
+          <h2 id="modal-title" className="text-xl font-semibold text-white">Create New Asset</h2>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white" aria-label="Close modal">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-6 space-y-5">
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-1.5">Name</label>
-            <input 
-              required
+            <label className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2">Type</label>
+            <div className="flex gap-2">
+              {typeOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setType(opt.value)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm transition-all ${
+                    type === opt.value
+                      ? "bg-[var(--brand-soft)] text-[var(--brand)] border border-[var(--brand)]"
+                      : "bg-[rgba(255,255,255,0.03)] text-[var(--text-muted)] border border-[var(--line)]"
+                  }`}
+                >
+                  {opt.icon}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="asset-name" className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2">Name</label>
+            <input
+              id="asset-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="cc-input h-11 px-4 text-sm" 
-              placeholder="e.g. Code Review Assistant"
+              placeholder="e.g., Code Architect"
+              className="cc-input h-12 px-4 text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-1.5">Type</label>
-            <select 
-              value={type}
-              onChange={(e) => setType(e.target.value as AssetType)}
-              className="cc-input h-11 px-4 text-sm appearance-none"
-            >
-              <option value="skill">Skill</option>
-              <option value="prompt">Prompt</option>
-              <option value="workflow">Workflow</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-1.5">Content</label>
-            <textarea 
-              required
+            <label htmlFor="asset-content" className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2">Content</label>
+            <textarea
+              id="asset-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="cc-input min-h-[160px] p-4 text-sm resize-none" 
-              placeholder="Paste your system prompt or asset content here..."
+              placeholder="Write your prompt or skill definition..."
+              className="cc-input min-h-[150px] p-4 text-sm resize-none"
             />
           </div>
+        </div>
 
-          <div className="pt-4 flex gap-3">
-            <button type="button" onClick={onClose} className="cc-btn-secondary flex-1 py-2.5 text-sm font-medium">Cancel</button>
-            <button type="submit" className="cc-btn-primary flex-1 py-2.5 text-sm font-medium">Create Asset</button>
-          </div>
-        </form>
+        <div className="p-6 border-t border-[var(--line)] flex justify-end gap-3">
+          <button onClick={onClose} className="cc-btn-secondary px-6 py-2.5 text-sm font-medium">
+            Cancel
+          </button>
+          <button onClick={handleCreate} className="cc-btn-primary px-6 py-2.5 flex items-center gap-2 text-sm font-medium">
+            <Plus className="h-4 w-4" /> Create Asset
+          </button>
+        </div>
       </div>
     </div>
   );
