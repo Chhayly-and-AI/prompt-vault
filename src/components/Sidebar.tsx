@@ -7,7 +7,6 @@ import {
   Workflow,
   TerminalSquare,
   MessageSquare,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Hash,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useStore } from "@/store/useStore";
+import type { AppView } from "@/types/navigation";
 
 import type { AppView } from "@/types/navigation";
 
@@ -175,12 +175,12 @@ function NavItem({ icon: Icon, label, active, collapsed, onClick }: NavItemProps
     <button
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-sm transition ${
-        active
+        isActive
           ? "border-[var(--line-strong)] bg-[rgba(24,35,53,0.62)] text-white"
           : "border-transparent bg-transparent text-[var(--text-muted)] hover:border-[var(--line)] hover:bg-[rgba(8,13,20,0.46)]"
       } ${collapsed ? "justify-center px-0" : ""}`}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-[var(--brand)]" : ""}`} />
+      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-[var(--brand)]" : ""}`} />
       {!collapsed && <span className="truncate">{label}</span>}
     </button>
   );
