@@ -31,6 +31,11 @@
     border-color: var(--line);
   }
 
+  *:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
   html,
   body {
     margin: 0;
@@ -114,6 +119,7 @@
     border: 1px solid rgba(168, 204, 255, 0.38);
     box-shadow: 0 10px 24px rgba(78, 134, 231, 0.35);
     transition: transform 0.16s ease, filter 0.16s ease;
+    cursor: pointer;
   }
 
   .cc-btn-primary:hover {
@@ -130,6 +136,7 @@
     background: rgba(10, 16, 25, 0.7);
     color: #d6e1f6;
     transition: border-color 0.16s ease, background-color 0.16s ease;
+    cursor: pointer;
   }
 
   .cc-btn-secondary:hover {
