@@ -28,7 +28,7 @@ export function CreateAssetModal({ isOpen, onClose }: { isOpen: boolean; onClose
       workspaceId: activeWorkspaceId,
       tags: [],
       createdAt: Date.now(),
-      updatedAt: Date.now(),
+      updatedAt: Date.now(), pinned: false,
     };
 
     addAsset(newAsset);
