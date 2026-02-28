@@ -2,22 +2,22 @@
 
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { Plus, MessageSquare, Layers3, Download } from "lucide-react";
+import { Plus, MessageSquare, Layers3, Download, FolderGit2 } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { AssetList } from "@/features/assets/components/AssetList";
 import { CreateAssetModal } from "@/features/assets/components/CreateAssetModal";
 import { ChatInterface } from "@/features/chat/components/ChatInterface";
+import { GitHubWizard } from "@/features/import/components/GitHubWizard";
 import { useStorageActions } from "@/lib/storage-helpers";
 import { exportWorkspace, downloadJSON } from "@/lib/portability/json-handler";
 
 export default function Home() {
-  const [view, setView] = useState<"library" | "chat">("library");
+  const [view, setView] = useState<"library" | "chat" | "import">("library");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
-  const store = useStore.getState();
   
   const { addConversation } = useStorageActions();
   const setActiveConversationId = useStore((state) => state.setActiveConversationId);
@@ -71,6 +71,12 @@ export default function Home() {
                 >
                   <MessageSquare className="h-3.5 w-3.5" /> Chat
                 </button>
+                <button 
+                  onClick={() => setView("import") }
+                  className={`flex items-center gap-2 px-3 rounded-lg text-xs font-medium transition ${view === "import" ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--text-muted)] hover:text-white"}`}
+                >
+                  <FolderGit2 className="h-3.5 w-3.5" /> Import
+                </button>
              </div>
           </div>
           <div className="flex items-center gap-3">
@@ -101,8 +107,10 @@ export default function Home() {
              </div>
            ) : view === "library" ? (
              <AssetList />
-           ) : (
+           ) : view === "chat" ? (
              <ChatInterface />
+           ) : (
+             <GitHubWizard />
            )}
         </div>
       </div>
