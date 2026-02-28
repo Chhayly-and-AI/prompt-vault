@@ -9,14 +9,12 @@ import {
   MessageSquare,
   Settings,
   ChevronLeft,
-  ChevronRight,
-  Plus
+  ChevronRight
 } from "lucide-react";
-import { useStore } from "@/store/useStore";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
 
   return (
     <aside 
@@ -24,7 +22,7 @@ export function Sidebar() {
         collapsed ? "w-20" : "w-[280px]"
       }`}
     >
-      <div className="p-4">
+      <div className="p-4 space-y-4">
         <div className="cc-glass flex items-center gap-3 rounded-2xl p-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand)]">
             <Compass className="h-5 w-5" />
@@ -36,6 +34,8 @@ export function Sidebar() {
             </div>
           )}
         </div>
+
+        <WorkspaceSwitcher collapsed={collapsed} />
       </div>
 
       <nav className="flex-1 space-y-2 px-4 py-6">
