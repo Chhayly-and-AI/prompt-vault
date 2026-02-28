@@ -2,8 +2,8 @@
 
 import { useState, useRef } from "react";
 import { useStore } from "@/store/useStore";
-import { Send, Hash, AtSign, Zap, MessageSquare, TerminalSquare, Workflow, Box, FileCode } from "lucide-react";
-import { Asset } from "@/schemas/models";
+import { Send, Hash, AtSign, Zap, MessageSquare, FileCode } from "lucide-react";
+import { Asset, Mention } from "@/schemas/models";
 import { PromptCompiler } from "./PromptCompiler";
 
 export function ChatInterface() {
@@ -16,10 +16,12 @@ export function ChatInterface() {
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [isCompilerOpen, setIsCompilerOpen] = useState(false);
+  const [currentMentions, setCurrentMentions] = useState<Mention[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const filteredAssets = assets.filter(a => 
-    a.name.toLowerCase().includes(mentionQuery.toLowerCase())
+    a.name.toLowerCase().includes(mentionQuery.toLowerCase()) && 
+    a.workspaceId === (activeConversation?.workspaceId || "")
   ).slice(0, 5);
 
   const handleSend = () => {
@@ -29,7 +31,7 @@ export function ChatInterface() {
       id: crypto.randomUUID(),
       role: "user" as const,
       content: input,
-      mentions: [],
+      mentions: currentMentions,
       createdAt: Date.now(),
     };
 
@@ -42,12 +44,22 @@ export function ChatInterface() {
     }));
 
     setInput("");
+    setCurrentMentions([]);
   };
 
   const insertMention = (asset: Asset) => {
     const trigger = asset.type === "skill" ? "@" : asset.type === "prompt" ? "#" : "~";
     const textToInsert = `${trigger}${asset.name} `;
+    
+    const newMention: Mention = {
+      id: crypto.randomUUID(),
+      type: asset.type,
+      name: asset.name,
+      assetId: asset.id
+    };
+
     setInput(prev => prev.replace(new RegExp(`[\\@\\#\\~]${mentionQuery}$`), textToInsert));
+    setCurrentMentions(prev => [...prev, newMention]);
     setShowMentions(false);
     textareaRef.current?.focus();
   };
@@ -69,7 +81,6 @@ export function ChatInterface() {
 
   return (
     <div className="flex h-full flex-col relative">
-      {/* Thread Header */}
       <div className="px-6 py-3 border-b border-[var(--line)] flex justify-between items-center bg-[rgba(255,255,255,0.01)]">
          <div className="flex items-center gap-2 text-[var(--text-muted)]">
             <MessageSquare className="h-3.5 w-3.5" />
