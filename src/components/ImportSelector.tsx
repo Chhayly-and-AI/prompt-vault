@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from 'react';
-import { ScannedItem } from '@/types';
-import { FileText, Zap, ChevronRight, Import, CheckCircle2, Circle, ArrowLeft, Info, Cpu, Layers } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { useState } from "react";
+import { ScannedItem } from "@/types";
+import {
+  FileText,
+  Zap,
+  Import,
+  CheckCircle2,
+  Circle,
+  ArrowLeft,
+  Info,
+  Loader2,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface ImportSelectorProps {
   items: ScannedItem[];
@@ -17,8 +21,14 @@ interface ImportSelectorProps {
   onCancel: () => void;
 }
 
-export default function ImportSelector({ items, onImport, onCancel }: ImportSelectorProps) {
-  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set(items.map(i => i.path)));
+export default function ImportSelector({
+  items,
+  onImport,
+  onCancel,
+}: ImportSelectorProps) {
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
+    new Set(items.map((i) => i.path))
+  );
   const [importing, setImporting] = useState(false);
 
   const toggleItem = (path: string) => {
@@ -29,7 +39,7 @@ export default function ImportSelector({ items, onImport, onCancel }: ImportSele
   };
 
   const selectAll = () => {
-    setSelectedPaths(new Set(items.map(i => i.path)));
+    setSelectedPaths(new Set(items.map((i) => i.path)));
   };
 
   const deselectAll = () => {
@@ -38,120 +48,157 @@ export default function ImportSelector({ items, onImport, onCancel }: ImportSele
 
   const handleImport = async () => {
     setImporting(true);
-    // Visual feedback delay
-    await new Promise(r => setTimeout(r, 1500));
-    const selected = items.filter(item => selectedPaths.has(item.path));
+    await new Promise((r) => setTimeout(r, 1200));
+    const selected = items.filter((item) => selectedPaths.has(item.path));
     onImport(selected);
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-6 h-[calc(100vh-280px)]">
-      {/* Header Info */}
-      <div className="flex items-center justify-between glass p-6 rounded-3xl border border-zinc-800 shadow-xl">
-        <div className="flex items-center gap-4">
-          <button 
+    <div className="w-full max-w-4xl mx-auto flex flex-col gap-5 max-h-[calc(100vh-300px)]">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between glass p-5 rounded-2xl border border-surface-800/50 gap-4">
+        <div className="flex items-center gap-3">
+          <button
             onClick={onCancel}
-            className="p-3 bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all active:scale-95"
+            className="p-2.5 bg-surface-900/80 border border-surface-800/50 rounded-xl text-surface-400 hover:text-surface-100 hover:bg-surface-800 transition-all active:scale-95"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <h2 className="text-2xl font-bold text-white tracking-tight">Discovery Results</h2>
-              <span className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-[10px] font-bold uppercase">
-                {items.length} Assets Found
+              <h2 className="text-lg font-bold text-surface-50 tracking-tight">
+                Scan Results
+              </h2>
+              <span className="px-2 py-0.5 bg-accent-500/10 border border-accent-500/20 rounded-full text-accent-400 text-[10px] font-semibold">
+                {items.length} found
               </span>
             </div>
-            <p className="text-zinc-500 text-sm">Select the components you want to commit to your local vault.</p>
+            <p className="text-surface-500 text-xs">
+              Select items to import into your vault.
+            </p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <div className="hidden lg:flex flex-col items-end justify-center mr-4">
-            <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Selection</p>
-            <div className="flex gap-3 mt-1">
-              <button onClick={selectAll} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Select All</button>
-              <div className="w-1 h-1 rounded-full bg-zinc-800 self-center" />
-              <button onClick={deselectAll} className="text-xs text-zinc-500 hover:text-zinc-400 font-medium">Clear All</button>
-            </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={selectAll}
+              className="text-xs text-accent-400 hover:text-accent-300 font-medium transition-colors"
+            >
+              Select All
+            </button>
+            <span className="text-surface-700">·</span>
+            <button
+              onClick={deselectAll}
+              className="text-xs text-surface-500 hover:text-surface-400 font-medium transition-colors"
+            >
+              Clear
+            </button>
           </div>
-          <button 
+          <button
             onClick={handleImport}
             disabled={selectedPaths.size === 0 || importing}
-            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-2xl flex items-center gap-3 transition-all shadow-lg shadow-indigo-600/10 active:scale-[0.98]"
+            className="px-5 py-2.5 gradient-accent hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-accent-500/15 active:scale-[0.98] text-sm"
           >
             {importing ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Ingesting...
+                Importing...
               </span>
             ) : (
               <span className="flex items-center gap-2">
                 <Import className="h-4 w-4" />
-                Commit {selectedPaths.size} {selectedPaths.size === 1 ? 'Asset' : 'Assets'}
+                Import {selectedPaths.size}
               </span>
             )}
           </button>
         </div>
       </div>
 
-      {/* Grid of Items */}
-      <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-max">
+      {/* Grid */}
+      <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-3.5 auto-rows-max">
         {items.map((item, index) => {
           const isSelected = selectedPaths.has(item.path);
           return (
-            <motion.div 
+            <motion.div
               key={item.path}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: index * 0.04, duration: 0.25 }}
               onClick={() => toggleItem(item.path)}
               className={cn(
-                "group cursor-pointer flex flex-col p-5 rounded-2xl border transition-all duration-200",
-                isSelected 
-                  ? "bg-indigo-600/10 border-indigo-500/50 ring-1 ring-indigo-500/20" 
-                  : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/30"
+                "group cursor-pointer flex flex-col p-4 rounded-xl border transition-all duration-200",
+                isSelected
+                  ? "bg-accent-500/8 border-accent-500/30"
+                  : "bg-surface-950/40 border-surface-800/40 hover:border-surface-700/50 hover:bg-surface-900/30"
               )}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={cn(
-                  "p-3 rounded-xl transition-colors",
-                  isSelected ? "bg-indigo-500 text-white" : "bg-zinc-900 text-zinc-400 group-hover:text-zinc-200"
-                )}>
-                  {item.type === 'skill' ? <Cpu className="h-5 w-5" /> : <Layers className="h-5 w-5" />}
+              <div className="flex items-start justify-between mb-3">
+                <div
+                  className={cn(
+                    "p-2.5 rounded-xl transition-colors",
+                    isSelected
+                      ? "bg-accent-500 text-white"
+                      : "bg-surface-900 text-surface-400 group-hover:text-surface-200"
+                  )}
+                >
+                  {item.type === "skill" ? (
+                    <Zap className="h-4 w-4" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
                 </div>
                 {isSelected ? (
-                  <CheckCircle2 className="h-6 w-6 text-indigo-500 fill-indigo-500/10" />
+                  <CheckCircle2 className="h-5 w-5 text-accent-400" />
                 ) : (
-                  <Circle className="h-6 w-6 text-zinc-800 group-hover:text-zinc-700" />
+                  <Circle className="h-5 w-5 text-surface-800 group-hover:text-surface-600" />
                 )}
               </div>
-              
+
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn(
-                    "font-bold text-lg truncate",
-                    isSelected ? "text-indigo-100" : "text-zinc-200"
-                  )}>{item.name}</span>
-                  <span className={cn(
-                    "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase",
-                    item.type === 'skill' ? "bg-amber-500/10 text-amber-500" : "bg-blue-500/10 text-blue-500"
-                  )}>{item.type}</span>
+                  <span
+                    className={cn(
+                      "font-semibold text-sm truncate",
+                      isSelected ? "text-surface-100" : "text-surface-200"
+                    )}
+                  >
+                    {item.name}
+                  </span>
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase shrink-0",
+                      item.type === "skill"
+                        ? "bg-amber-500/10 text-amber-400"
+                        : "bg-sky-500/10 text-sky-400"
+                    )}
+                  >
+                    {item.type}
+                  </span>
                 </div>
-                <p className="text-xs text-zinc-500 font-mono truncate bg-black/30 px-2 py-1 rounded border border-zinc-800/50">
+                {item.description ? (
+                  <p className="text-[11px] text-surface-400 line-clamp-2 leading-relaxed mb-1.5">
+                    {item.description}
+                  </p>
+                ) : null}
+                <p className="text-[10px] text-surface-500 font-mono truncate bg-surface-950/40 px-2 py-1 rounded border border-surface-800/30">
                   {item.path}
                 </p>
               </div>
 
               {item.dependencies && item.dependencies.length > 0 && (
-                <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                  <div className="flex -space-x-2">
+                <div className="mt-3 flex items-center gap-1.5 text-[10px] text-surface-500">
+                  <div className="flex -space-x-1.5">
                     {item.dependencies.slice(0, 3).map((_, i) => (
-                      <div key={i} className="w-5 h-5 rounded-full bg-zinc-800 border-2 border-zinc-950 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
+                      <div
+                        key={i}
+                        className="w-4 h-4 rounded-full bg-surface-800 border-2 border-surface-950 flex items-center justify-center"
+                      >
+                        <div className="w-1 h-1 rounded-full bg-surface-600" />
                       </div>
                     ))}
                   </div>
-                  <span>{item.dependencies.length} Linked Dependencies</span>
+                  <span>{item.dependencies.length} dependencies</span>
                 </div>
               )}
             </motion.div>
@@ -159,28 +206,23 @@ export default function ImportSelector({ items, onImport, onCancel }: ImportSele
         })}
       </div>
 
-      <div className="glass rounded-2xl p-4 border border-zinc-800/50 flex items-center gap-4">
-        <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
-          <Info className="h-5 w-5" />
+      {/* Info footer */}
+      <div className="glass rounded-xl p-3.5 border border-surface-800/40 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-accent-500/10 flex items-center justify-center text-accent-400 shrink-0">
+          <Info className="h-4 w-4" />
         </div>
-        <p className="text-xs text-zinc-400 leading-relaxed">
-          The extraction engine has identified <span className="text-zinc-200 font-bold">{items.filter(i => i.type === 'skill').length} Agentic Skills</span> and <span className="text-zinc-200 font-bold">{items.filter(i => i.type === 'prompt').length} Specialized Prompts</span>. All associated dependencies and system prompt segments will be bundled into the vault.
+        <p className="text-[11px] text-surface-400 leading-relaxed">
+          Found{" "}
+          <span className="text-surface-200 font-semibold">
+            {items.filter((i) => i.type === "skill").length} skills
+          </span>{" "}
+          and{" "}
+          <span className="text-surface-200 font-semibold">
+            {items.filter((i) => i.type === "prompt").length} prompts
+          </span>
+          . All data will be stored locally in your browser.
         </p>
       </div>
     </div>
-  );
-}
-
-function Loader2({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={cn("animate-spin", className)} 
-      xmlns="http://www.w3.org/2000/svg" 
-      fill="none" 
-      viewBox="0 0 24 24"
-    >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
   );
 }

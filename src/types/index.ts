@@ -11,6 +11,7 @@ export interface PromptItem {
 
 export interface ScannedItem {
   name: string;
+  description?: string;
   path: string;
   type: 'prompt' | 'skill';
   content: string;

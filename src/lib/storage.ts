@@ -1,9 +1,11 @@
 import { get, set, del, keys } from 'idb-keyval';
 import { PromptItem } from '@/types';
 
-const STORE_NAME = 'prompts';
-
 export async function savePrompt(prompt: PromptItem): Promise<void> {
+  await set(prompt.id, prompt);
+}
+
+export async function updatePrompt(prompt: PromptItem): Promise<void> {
   await set(prompt.id, prompt);
 }
 
