@@ -10,7 +10,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Hash
+  Hash,
+  Pin
 } from "lucide-react";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useStore } from "@/store/useStore";
@@ -19,6 +20,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const conversations = useStore((state) => state.conversations).filter(c => c.workspaceId === activeWorkspaceId);
+  const pinnedAssets = useStore((state) => state.assets).filter(a => a.workspaceId === activeWorkspaceId && a.pinned);
   const activeConversationId = useStore((state) => state.activeConversationId);
   const setActiveConversationId = useStore((state) => state.setActiveConversationId);
 
@@ -45,8 +47,26 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto space-y-1 px-4 py-6 scrollbar-hide">
-        <NavItem icon={Layers3} label="Library" collapsed={collapsed} />
+        <NavItem icon={Layers3} label="Library" collapsed={collapsed} active />
         
+        {pinnedAssets.length > 0 && !collapsed && (
+          <>
+            <div className="mt-8 mb-2 px-2 flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Pinned Assets</p>
+              <Pin className="h-3 w-3 text-[var(--brand)] opacity-50" />
+            </div>
+            {pinnedAssets.map(asset => (
+              <button
+                key={asset.id}
+                className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-xs text-[var(--text-muted)] hover:bg-[rgba(255,255,255,0.03)] transition"
+              >
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--brand)] shadow-[0_0_8px_var(--brand)]" />
+                <span className="truncate">{asset.name}</span>
+              </button>
+            ))}
+          </>
+        )}
+
         <div className="mt-8 mb-2 px-2 flex items-center justify-between">
           <p className={`text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)] ${collapsed ? "hidden" : ""}`}>Recent Chats</p>
           {!collapsed && <MessageSquare className="h-3 w-3 text-[var(--text-muted)] opacity-50" />}

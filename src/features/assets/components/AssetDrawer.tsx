@@ -1,7 +1,7 @@
 "use client";
 
 import { Asset } from "@/schemas/models";
-import { X, Copy, Trash2, Edit3, CheckCircle2 } from "lucide-react";
+import { X, Copy, Trash2, Edit3, CheckCircle2, Pin, PinOff } from "lucide-react";
 import { useState } from "react";
 import { useStorageActions } from "@/lib/storage-helpers";
 
@@ -11,7 +11,7 @@ interface AssetDrawerProps {
 }
 
 export function AssetDrawer({ asset, onClose }: AssetDrawerProps) {
-  const { deleteAsset } = useStorageActions();
+  const { deleteAsset, togglePin } = useStorageActions();
   const [copied, setCopied] = useState(false);
 
   if (!asset) return null;
@@ -38,6 +38,12 @@ export function AssetDrawer({ asset, onClose }: AssetDrawerProps) {
              <div className="cc-pill px-2 py-1 text-[10px] uppercase tracking-wider text-[var(--brand)] font-bold">
                {asset.type}
              </div>
+             <button 
+               onClick={() => togglePin(asset.id)}
+               className={`p-1.5 rounded-lg transition-colors ${asset.pinned ? 'bg-[var(--brand-soft)] text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-white'}`}
+             >
+               {asset.pinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+             </button>
           </div>
           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white transition-colors">
             <X className="h-5 w-5" />
