@@ -5,7 +5,7 @@ export interface PromptItem {
   type: 'prompt' | 'skill';
   sourceUrl?: string;
   tags?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: number;
 }
 

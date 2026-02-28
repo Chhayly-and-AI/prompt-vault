@@ -1,258 +1,344 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import GitHubScanner from '@/components/GitHubScanner';
-import ImportSelector from '@/components/ImportSelector';
-import LibraryView from '@/components/LibraryView';
-import { ScannedItem, PromptItem } from '@/types';
-import { getAllPrompts, savePrompt, deletePrompt } from '@/lib/storage';
-import { 
-  LayoutGrid, 
-  Plus, 
-  Import, 
-  Github, 
-  Settings, 
-  Search, 
-  FolderOpen, 
-  Star, 
-  Clock,
-  Terminal,
-  ShieldCheck,
-  Zap
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useMemo, useState } from "react";
+import GitHubScanner from "@/components/GitHubScanner";
+import ImportSelector from "@/components/ImportSelector";
+import LibraryView from "@/components/LibraryView";
+import { getAllPrompts, savePrompt } from "@/lib/storage";
+import { PromptItem, ScannedItem } from "@/types";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Archive,
+  CheckCircle2,
+  Compass,
+  Database,
+  FolderGit2,
+  Github,
+  Layers3,
+  Search,
+  Sparkles,
+  TerminalSquare,
+  Workflow,
+} from "lucide-react";
+
+type View = "library" | "import";
+type WizardStep = "scan" | "select" | "success";
+
+const categoryOptions = [
+  { id: "all", label: "All Assets", icon: Layers3 },
+  { id: "skill", label: "Skills", icon: Workflow },
+  { id: "prompt", label: "Prompts", icon: TerminalSquare },
+] as const;
 
 export default function Home() {
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
   const [scannedItems, setScannedItems] = useState<ScannedItem[] | null>(null);
-  const [view, setView] = useState<'library' | 'import'>('library');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    loadPrompts();
-  }, []);
+  const [view, setView] = useState<View>("library");
+  const [wizardStep, setWizardStep] = useState<WizardStep>("scan");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [lastImportCount, setLastImportCount] = useState(0);
 
   const loadPrompts = async () => {
     const data = await getAllPrompts();
     setPrompts(data.sort((a, b) => b.createdAt - a.createdAt));
   };
 
+  useEffect(() => {
+    void loadPrompts();
+  }, []);
+
+  const filteredPrompts = useMemo(() => {
+    return prompts.filter((prompt) => {
+      const matchesSearch =
+        searchQuery.trim().length === 0 ||
+        prompt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        prompt.content.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === "all" || prompt.type === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [prompts, searchQuery, activeCategory]);
+
+  const skillCount = prompts.filter((item) => item.type === "skill").length;
+  const promptCount = prompts.filter((item) => item.type === "prompt").length;
+
   const handleItemsScanned = (items: ScannedItem[]) => {
     setScannedItems(items);
+    setWizardStep("select");
   };
 
-  const handleImport = async (selected: ScannedItem[]) => {
-    for (const item of selected) {
+  const handleImport = async (selectedItems: ScannedItem[]) => {
+    for (const item of selectedItems) {
       await savePrompt({
         id: crypto.randomUUID(),
         name: item.name,
         content: item.content,
         type: item.type,
+        sourceUrl: item.path,
         createdAt: Date.now(),
-        sourceUrl: item.path
       });
     }
-    setScannedItems(null);
-    setView('library');
-    loadPrompts();
+
+    setLastImportCount(selectedItems.length);
+    setWizardStep("success");
+    await loadPrompts();
   };
 
-  const filteredPrompts = prompts.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         p.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || p.type === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const resetImportFlow = () => {
+    setScannedItems(null);
+    setWizardStep("scan");
+  };
+
+  const jumpToImport = () => {
+    setView("import");
+    resetImportFlow();
+  };
 
   return (
-    <main className="flex h-screen bg-[#09090b] text-zinc-100 overflow-hidden font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-zinc-800 bg-[#09090b] flex flex-col z-20">
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="font-bold tracking-tight text-lg leading-tight">Prompt Vault</h1>
-            <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Engineering Tool</span>
-          </div>
-        </div>
-
-        <nav className="flex-1 px-4 py-4 space-y-1">
-          <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest px-2 mb-2 flex items-center justify-between">
-            Navigation
-            <Zap className="h-3 w-3 text-indigo-500" />
-          </div>
-          <button 
-            onClick={() => setView('library')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${view === 'library' ? 'bg-zinc-800/50 text-indigo-400 ring-1 ring-zinc-700' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/30'}`}
-          >
-            <LayoutGrid className="h-4 w-4" />
-            Library
-          </button>
-          <button 
-            onClick={() => setView('import')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${view === 'import' ? 'bg-zinc-800/50 text-indigo-400 ring-1 ring-zinc-700' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/30'}`}
-          >
-            <Import className="h-4 w-4" />
-            Import
-          </button>
-
-          <div className="mt-8 text-[11px] font-bold text-zinc-500 uppercase tracking-widest px-2 mb-2">
-            Collections
-          </div>
-          <button 
-            onClick={() => setActiveCategory('all')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeCategory === 'all' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/30'}`}
-          >
-            <FolderOpen className="h-4 w-4" />
-            All Prompts
-          </button>
-          <button 
-            onClick={() => setActiveCategory('skill')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeCategory === 'skill' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/30'}`}
-          >
-            <Star className="h-4 w-4" />
-            Skills (SKILL.md)
-          </button>
-          <button 
-            onClick={() => setActiveCategory('prompt')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeCategory === 'prompt' ? 'text-indigo-400' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/30'}`}
-          >
-            <Terminal className="h-4 w-4" />
-            Prompt Files
-          </button>
-        </nav>
-
-        <div className="p-4 border-t border-zinc-800">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
-            <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Plus className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">Quick Actions</p>
-              <p className="text-[10px] text-zinc-500">v1.2.4-stable</p>
+    <main className="cc-shell cc-grid-bg text-[var(--text)]">
+      <div className="relative z-10 flex min-h-screen">
+        <aside className="hidden w-[274px] shrink-0 border-r border-[var(--line)] bg-[rgba(7,11,17,0.78)] p-5 backdrop-blur-xl md:flex md:flex-col">
+          <div className="cc-glass rounded-2xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand)]">
+                <Compass className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-[var(--text-muted)]">Command Center</p>
+                <h1 className="text-lg font-semibold">Prompt Vault</h1>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative overflow-hidden">
-        {/* Top Header/Search */}
-        <header className="h-16 border-b border-zinc-800 flex items-center justify-between px-8 bg-[#09090b]/80 backdrop-blur-md z-10">
-          <div className="flex-1 max-w-xl relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-            <input 
-              type="text" 
-              placeholder="Search vault (Ctrl+K)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors">
-              <Settings className="h-5 w-5" />
-            </button>
-            <div className="h-6 w-[1px] bg-zinc-800" />
-            <button 
-              onClick={() => setView('import')}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+          <div className="mt-6 space-y-2">
+            <button
+              onClick={() => setView("library")}
+              className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
+                view === "library"
+                  ? "border-[var(--line-strong)] bg-[rgba(25,39,60,0.55)]"
+                  : "border-[var(--line)] bg-[rgba(9,14,22,0.45)] hover:border-[var(--line-strong)]"
+              }`}
             >
-              <Plus className="h-4 w-4" />
-              New Entry
+              <span className="flex items-center gap-2 font-medium">
+                <Archive className="h-4 w-4" /> Library
+              </span>
+            </button>
+            <button
+              onClick={jumpToImport}
+              className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
+                view === "import"
+                  ? "border-[var(--line-strong)] bg-[rgba(25,39,60,0.55)]"
+                  : "border-[var(--line)] bg-[rgba(9,14,22,0.45)] hover:border-[var(--line-strong)]"
+              }`}
+            >
+              <span className="flex items-center gap-2 font-medium">
+                <FolderGit2 className="h-4 w-4" /> GitHub Import
+              </span>
             </button>
           </div>
-        </header>
 
-        {/* Dynamic Content */}
-        <div className="flex-1 overflow-y-auto p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/10 via-zinc-950 to-zinc-950">
-          <AnimatePresence mode="wait">
-            {view === 'library' ? (
-              <motion.div 
-                key="library"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-8"
+          <div className="mt-7">
+            <p className="mb-2 px-2 text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Filter</p>
+            <div className="space-y-2">
+              {categoryOptions.map((category) => {
+                const Icon = category.icon;
+                const active = activeCategory === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => setActiveCategory(category.id)}
+                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-sm transition ${
+                      active
+                        ? "border-[var(--line-strong)] bg-[rgba(24,35,53,0.62)]"
+                        : "border-[var(--line)] bg-[rgba(8,13,20,0.46)] hover:border-[var(--line-strong)]"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 text-[var(--brand)]" />
+                    {category.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-auto grid gap-3">
+            <div className="cc-glass rounded-2xl p-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Assets</p>
+              <p className="mt-1 text-2xl font-semibold">{prompts.length}</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">{skillCount} skills, {promptCount} prompts</p>
+            </div>
+            <div className="cc-glass rounded-2xl p-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Storage</p>
+              <p className="mt-2 flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                <Database className="h-4 w-4 text-[var(--ok)]" /> IndexedDB local-first
+              </p>
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[rgba(7,11,17,0.72)] px-4 py-3 backdrop-blur-xl md:px-7">
+            <div className="flex items-center gap-3">
+              <div className="relative w-full max-w-2xl">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="cc-input h-10 pl-10 pr-3 text-sm"
+                  placeholder="Search prompts and skills"
+                />
+              </div>
+              <button onClick={jumpToImport} className="cc-btn-primary px-4 py-2 text-sm font-medium">
+                Import
+              </button>
+            </div>
+            <div className="mt-3 flex gap-2 md:hidden">
+              <button
+                onClick={() => setView("library")}
+                className={`cc-pill px-3 py-1.5 text-xs ${view === "library" ? "text-white" : "text-[var(--text-muted)]"}`}
               >
-                <div className="flex justify-between items-end border-b border-zinc-800 pb-6">
-                  <div>
-                    <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-1">
-                      <Clock className="h-3 w-3" />
-                      Updated 2m ago
-                    </div>
-                    <h2 className="text-4xl font-bold tracking-tight">Engineering Library</h2>
-                    <p className="text-zinc-400 mt-2 max-w-lg">Manage mission-critical LLM prompts and agentic behaviors from your personal vault.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-[10px] font-bold uppercase">
-                      {filteredPrompts.length} Items Found
-                    </div>
-                  </div>
-                </div>
-                <LibraryView prompts={filteredPrompts} onRefresh={loadPrompts} />
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="import"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-8 flex flex-col items-center"
+                Library
+              </button>
+              <button
+                onClick={jumpToImport}
+                className={`cc-pill px-3 py-1.5 text-xs ${view === "import" ? "text-white" : "text-[var(--text-muted)]"}`}
               >
-                <div className="text-center max-w-2xl mx-auto mb-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-[10px] font-bold uppercase mb-4">
-                    External Repository Sync
+                Import Wizard
+              </button>
+            </div>
+          </header>
+
+          <div className="flex-1 overflow-y-auto px-4 py-5 md:px-7 md:py-7">
+            <AnimatePresence mode="wait">
+              {view === "library" ? (
+                <motion.section
+                  key="library"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-6"
+                >
+                  <div className="cc-glass rounded-3xl p-5 md:p-6">
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Prompt Operations</p>
+                        <h2 className="mt-1 text-2xl font-semibold md:text-3xl">Engineering Library</h2>
+                        <p className="mt-2 max-w-2xl text-sm text-[var(--text-muted)]">
+                          Local-first storage, dependency-aware imports, and fast preview workflows for team prompt systems.
+                        </p>
+                      </div>
+                      <div className="cc-pill px-3 py-1.5 text-xs text-[var(--text-muted)]">
+                        {filteredPrompts.length} visible / {prompts.length} total
+                      </div>
+                    </div>
                   </div>
-                  <h2 className="text-4xl font-bold tracking-tight mb-4">Sync Repository</h2>
-                  <p className="text-zinc-400 text-lg">Connect to a GitHub repository to discover and ingest engineering-grade prompt assets.</p>
-                </div>
-                
-                <div className="w-full max-w-4xl">
-                  {!scannedItems ? (
-                    <GitHubScanner onItemsScanned={handleItemsScanned} />
-                  ) : (
-                    <ImportSelector 
-                      items={scannedItems} 
-                      onImport={handleImport} 
-                      onCancel={() => setScannedItems(null)} 
-                    />
+
+                  <LibraryView prompts={filteredPrompts} onRefresh={loadPrompts} />
+                </motion.section>
+              ) : (
+                <motion.section
+                  key="import"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-5"
+                >
+                  <div className="cc-glass rounded-3xl p-5 md:p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">GitHub Import Wizard</p>
+                        <h2 className="mt-1 text-2xl font-semibold md:text-3xl">Repository Intake</h2>
+                      </div>
+                      <ol className="flex items-center gap-2 text-xs md:text-sm">
+                        {[
+                          { key: "scan", label: "Scan" },
+                          { key: "select", label: "Select" },
+                          { key: "success", label: "Success" },
+                        ].map((entry, index) => {
+                          const isActive = wizardStep === entry.key;
+                          const done =
+                            (entry.key === "scan" && wizardStep !== "scan") ||
+                            (entry.key === "select" && wizardStep === "success");
+
+                          return (
+                            <li key={entry.key} className="flex items-center gap-2">
+                              <span
+                                className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] ${
+                                  done
+                                    ? "border-[rgba(83,193,149,0.6)] bg-[rgba(32,107,77,0.35)] text-[var(--ok)]"
+                                    : isActive
+                                      ? "border-[var(--line-strong)] bg-[rgba(38,61,97,0.58)] text-white"
+                                      : "border-[var(--line)] text-[var(--text-muted)]"
+                                }`}
+                              >
+                                {done ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
+                              </span>
+                              <span className={isActive ? "text-white" : "text-[var(--text-muted)]"}>{entry.label}</span>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                  </div>
+
+                  {wizardStep === "scan" && <GitHubScanner onItemsScanned={handleItemsScanned} />}
+                  {wizardStep === "select" && scannedItems && (
+                    <ImportSelector items={scannedItems} onImport={handleImport} onCancel={resetImportFlow} />
                   )}
-                </div>
-                
-                <div className="glass rounded-2xl p-8 max-w-2xl mx-auto mt-8 border border-zinc-800/50">
-                  <h3 className="font-bold text-white flex items-center gap-2 mb-4 text-lg">
-                    <Github className="h-5 w-5 text-indigo-400" />
-                    Intelligent Extraction Engine
-                  </h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-zinc-300">SKILL.md Analysis</p>
-                      <p className="text-xs text-zinc-500">Detects Claude/OpenClaw compliant skill definitions with full context mapping.</p>
+                  {wizardStep === "success" && (
+                    <div className="cc-glass mx-auto max-w-3xl rounded-3xl p-8 text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-[rgba(83,193,149,0.45)] bg-[rgba(31,103,75,0.34)] text-[var(--ok)]">
+                        <CheckCircle2 className="h-8 w-8" />
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">Import Complete</p>
+                      <h3 className="mt-2 text-2xl font-semibold">{lastImportCount} assets added to your vault</h3>
+                      <p className="mx-auto mt-2 max-w-xl text-sm text-[var(--text-muted)]">
+                        Prompt content and metadata were stored in IndexedDB. You can return to library view or start another scan.
+                      </p>
+                      <div className="mt-6 flex flex-wrap justify-center gap-3">
+                        <button
+                          onClick={() => setView("library")}
+                          className="cc-btn-primary px-5 py-2.5 text-sm font-medium"
+                        >
+                          Open Library
+                        </button>
+                        <button
+                          onClick={resetImportFlow}
+                          className="cc-btn-secondary px-5 py-2.5 text-sm font-medium"
+                        >
+                          Scan Another Repo
+                        </button>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-zinc-300">File Ingestion</p>
-                      <p className="text-xs text-zinc-500">Automatic detection of <code>.prompt</code> and <code>.ai</code> manifest files in recursive trees.</p>
+                  )}
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="cc-card p-4">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Scanning</p>
+                      <p className="mt-2 text-sm text-[var(--text-muted)]">Recursive Git tree fetch with SKILL.md and prompt discovery.</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-zinc-300">Dependency Graph</p>
-                      <p className="text-xs text-zinc-500">Identifies and bundles required assets mentioned in system prompt sections.</p>
+                    <div className="cc-card p-4">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Dependencies</p>
+                      <p className="mt-2 text-sm text-[var(--text-muted)]">Inline dependency extraction is retained for import context mapping.</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-zinc-300">Safe Sync</p>
-                      <p className="text-xs text-zinc-500">All data is encrypted and stored locally via IndexedDB. No server-side storage.</p>
+                    <div className="cc-card p-4">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Persistence</p>
+                      <p className="mt-2 text-sm text-[var(--text-muted)]">All records are stored locally with IndexedDB via `idb-keyval`.</p>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                </motion.section>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
+      </div>
+
+      <div className="pointer-events-none fixed bottom-4 right-4 z-40 hidden items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(10,17,27,0.72)] px-4 py-2 text-xs text-[var(--text-muted)] backdrop-blur-xl md:flex">
+        <Sparkles className="h-3.5 w-3.5 text-[var(--brand)]" />
+        IndexedDB active
+        <Github className="ml-1 h-3.5 w-3.5" />
       </div>
     </main>
   );

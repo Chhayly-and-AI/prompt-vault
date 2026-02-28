@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Prompt Vault v2",
-  description: "Advanced LLM Prompt and Agentic Skill Manager",
+  title: "Prompt Vault Command Center",
+  description: "Engineering-grade prompt vault with GitHub import workflows and local-first storage.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
