@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { Plus, Layers3 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useStore } from "@/store/useStore";
+import { AssetList } from "@/features/assets/components/AssetList";
+import { CreateAssetModal } from "@/features/assets/components/CreateAssetModal";
 
 export default function Home() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
@@ -23,7 +27,10 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
              <button className="cc-btn-secondary px-3 py-1.5 text-xs">Share</button>
-             <button className="cc-btn-primary flex items-center gap-2 px-3 py-1.5 text-xs font-medium">
+             <button 
+               onClick={() => setIsCreateModalOpen(true)}
+               className="cc-btn-primary flex items-center gap-2 px-3 py-1.5 text-xs font-medium"
+             >
                <Plus className="h-3.5 w-3.5" /> New Asset
              </button>
           </div>
@@ -31,14 +38,20 @@ export default function Home() {
 
         {/* Dynamic View Area */}
         <div className="flex-1 overflow-hidden p-6">
-           <div className="cc-glass flex h-full flex-col items-center justify-center rounded-3xl border-dashed opacity-50">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--brand-soft)]">
-                <Layers3 className="h-8 w-8 text-[var(--brand)]" />
-              </div>
-              <p className="text-sm text-[var(--text-muted)] font-mono">_content_frame_ready_</p>
-           </div>
+           {activeWorkspaceId ? (
+             <AssetList />
+           ) : (
+             <div className="cc-glass flex h-full flex-col items-center justify-center rounded-3xl border-dashed opacity-50">
+                <p className="text-sm text-[var(--text-muted)]">Please select a workspace to view assets.</p>
+             </div>
+           )}
         </div>
       </div>
+
+      <CreateAssetModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
     </main>
   );
 }
