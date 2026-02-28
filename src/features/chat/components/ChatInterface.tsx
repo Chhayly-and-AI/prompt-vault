@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useStore } from "@/store/useStore";
-import { Send, Hash, AtSign, Zap, MessageSquare, TerminalSquare, Workflow, Box } from "lucide-react";
+import { Send, Hash, AtSign, Zap, MessageSquare, TerminalSquare, Workflow, Box, FileCode } from "lucide-react";
 import { Asset } from "@/schemas/models";
+import { PromptCompiler } from "./PromptCompiler";
 
 export function ChatInterface() {
   const activeConversationId = useStore((state) => state.activeConversationId);
@@ -14,6 +15,7 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
+  const [isCompilerOpen, setIsCompilerOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const filteredAssets = assets.filter(a => 
@@ -27,7 +29,7 @@ export function ChatInterface() {
       id: crypto.randomUUID(),
       role: "user" as const,
       content: input,
-      mentions: [], // Logic for extraction could go here
+      mentions: [],
       createdAt: Date.now(),
     };
 
@@ -66,7 +68,21 @@ export function ChatInterface() {
   if (!activeConversationId) return <NoConversation />;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col relative">
+      {/* Thread Header */}
+      <div className="px-6 py-3 border-b border-[var(--line)] flex justify-between items-center bg-[rgba(255,255,255,0.01)]">
+         <div className="flex items-center gap-2 text-[var(--text-muted)]">
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span className="text-[10px] uppercase tracking-widest font-semibold">{activeConversation?.title}</span>
+         </div>
+         <button 
+           onClick={() => setIsCompilerOpen(true)}
+           className="cc-pill px-3 py-1 flex items-center gap-2 text-[10px] text-[var(--brand)] hover:bg-[var(--brand-soft)] transition-colors border-[rgba(104,166,255,0.2)]"
+         >
+           <FileCode className="h-3 w-3" /> COMPILE PROMPT
+         </button>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {activeConversation?.messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -79,7 +95,7 @@ export function ChatInterface() {
         ))}
       </div>
 
-      <div className="p-6 border-t border-[var(--line)] relative">
+      <div className="p-6 border-t border-[var(--line)] relative bg-[rgba(0,0,0,0.2)]">
         {showMentions && (
           <div className="absolute bottom-full left-6 mb-2 w-64 cc-glass rounded-xl overflow-hidden shadow-2xl z-50 border-[var(--line-strong)]">
             <div className="p-2 border-b border-[var(--line)] bg-[rgba(255,255,255,0.03)]">
@@ -117,6 +133,8 @@ export function ChatInterface() {
           </button>
         </div>
       </div>
+
+      <PromptCompiler isOpen={isCompilerOpen} onClose={() => setIsCompilerOpen(false)} />
     </div>
   );
 }
