@@ -26,10 +26,12 @@ export function AssetList() {
   return (
     <div className="flex h-full flex-col space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+        <div className="flex gap-2" role="tablist">
           {["all", "skill", "prompt", "workflow"].map((tab) => (
             <button
               key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab as any)}
               className={`cc-pill px-3 py-1.5 text-xs capitalize ${
                 activeTab === tab ? "text-white bg-[var(--brand-soft)] border-[var(--brand)]" : "text-[var(--text-muted)]"
@@ -45,12 +47,13 @@ export function AssetList() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search assets..."
+            aria-label="Search assets"
             className="cc-input h-9 pl-10 pr-3 text-xs"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+      <div className="flex-1 overflow-y-auto space-y-2 pr-2" role="list">
         {filteredAssets.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--line)] opacity-50">
             <Box className="h-8 w-8 text-[var(--text-muted)] mb-2" />
@@ -58,9 +61,14 @@ export function AssetList() {
           </div>
         ) : (
           filteredAssets.map((asset) => (
-            <div key={asset.id} onClick={() => setSelectedAsset(asset)}>
+            <button 
+              key={asset.id} 
+              role="listitem"
+              onClick={() => setSelectedAsset(asset)}
+              className="w-full text-left"
+            >
                <AssetItem asset={asset} />
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -77,7 +85,7 @@ function AssetItem({ asset }: { asset: Asset }) {
   const Icon = asset.type === "skill" ? Workflow : asset.type === "prompt" ? TerminalSquare : Box;
   
   return (
-    <div className="cc-card group flex items-center justify-between p-3 cursor-pointer">
+    <div className="cc-card group flex items-center justify-between p-3">
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[rgba(255,255,255,0.03)] text-[var(--brand)]">
           <Icon className="h-4.5 w-4.5" />
@@ -89,9 +97,7 @@ function AssetItem({ asset }: { asset: Asset }) {
           </p>
         </div>
       </div>
-      <button className="opacity-0 group-hover:opacity-100 p-1 text-[var(--text-muted)] hover:text-white transition-opacity">
-        <MoreVertical className="h-4 w-4" />
-      </button>
+      <MoreVertical className="opacity-0 group-hover:opacity-100 h-4 w-4 text-[var(--text-muted)] transition-opacity" />
     </div>
   );
 }
