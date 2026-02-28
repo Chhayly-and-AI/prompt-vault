@@ -75,8 +75,8 @@ export default function Home() {
 
   return (
     <main className="cc-shell cc-grid-bg flex h-screen overflow-hidden text-[var(--text)]">
-      <Sidebar />
-      <MobileSidebar isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} />
+      <Sidebar view={view} setView={setView} />
+      <MobileSidebar isOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} view={view} setView={setView} />
 
       {/* Main Content Area */}
       <div className="flex min-w-0 flex-1 flex-col">

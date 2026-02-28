@@ -3,13 +3,16 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { SidebarContent } from "@/components/Sidebar";
+import type { AppView } from "@/types/navigation";
 
 type MobileSidebarProps = {
   isOpen: boolean;
   onClose: () => void;
+  view: AppView;
+  setView: (view: AppView) => void;
 };
 
-export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
+export function MobileSidebar({ isOpen, onClose, view, setView }: MobileSidebarProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </button>
         </div>
 
-        <SidebarContent collapsed={false} onAction={onClose} />
+        <SidebarContent collapsed={false} view={view} setView={setView} onAction={onClose} />
       </div>
     </div>
   );
