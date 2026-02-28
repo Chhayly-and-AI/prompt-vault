@@ -1,6 +1,23 @@
 import { useStore } from "@/store/useStore";
 import { Asset, Workspace, Conversation } from "@/schemas/models";
 
+// Debounce utility
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+// Debounced state update (500ms)
+const debouncedSetState = debounce((updater: () => void) => {
+  updater();
+}, 500);
+
 export const useStorageActions = () => {
   return {
     // Assets
@@ -18,6 +35,13 @@ export const useStorageActions = () => {
       useStore.setState((state) => ({
         assets: state.assets.map((a) => (a.id === id ? { ...a, ...updates, updatedAt: Date.now() } : a)),
       }));
+    },
+    updateAssetDebounced: (id: string, updates: Partial<Asset>) => {
+      debouncedSetState(() => {
+        useStore.setState((state) => ({
+          assets: state.assets.map((a) => (a.id === id ? { ...a, ...updates, updatedAt: Date.now() } : a)),
+        }));
+      });
     },
     deleteAsset: (id: string) => {
       useStore.setState((state) => ({
@@ -41,6 +65,14 @@ export const useStorageActions = () => {
     addConversation: (conversation: Conversation) => {
       useStore.setState((state) => ({
         conversations: [...state.conversations, conversation],
+      }));
+    },
+    
+    updateConversation: (id: string, updates: Partial<Conversation>) => {
+      useStore.setState((state) => ({
+        conversations: state.conversations.map((c) => 
+          c.id === id ? { ...c, ...updates, updatedAt: Date.now() } : c
+        ),
       }));
     }
   };
