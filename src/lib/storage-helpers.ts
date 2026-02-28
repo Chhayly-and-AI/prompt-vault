@@ -2,8 +2,6 @@ import { useStore } from "@/store/useStore";
 import { Asset, Workspace, Conversation } from "@/schemas/models";
 
 export const useStorageActions = () => {
-  const store = useStore.getState();
-
   return {
     // Assets
     addAsset: (asset: Asset) => {
@@ -19,6 +17,11 @@ export const useStorageActions = () => {
     deleteAsset: (id: string) => {
       useStore.setState((state) => ({
         assets: state.assets.filter((a) => a.id !== id),
+      }));
+    },
+    togglePin: (id: string) => {
+      useStore.setState((state) => ({
+        assets: state.assets.map((a) => (a.id === id ? { ...a, pinned: !a.pinned } : a)),
       }));
     },
 

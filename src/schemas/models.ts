@@ -11,6 +11,7 @@ export const AssetSchema = z.object({
   tags: z.array(z.string()).default([]),
   workspaceId: z.string().uuid(),
   sourceUrl: z.string().url().optional(),
+  pinned: z.boolean().default(false),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
