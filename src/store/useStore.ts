@@ -7,10 +7,11 @@ import { Asset, Workspace, Conversation } from "@/schemas/models";
 // Custom storage for IndexedDB via idb-keyval
 const idbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    return (await get(name)) || null;
+    const value = await get(name);
+    return value ? JSON.stringify(value) : null;
   },
   setItem: async (name: string, value: string): Promise<void> => {
-    await set(name, value);
+    await set(name, JSON.parse(value));
   },
   removeItem: async (name: string): Promise<void> => {
     await del(name);
