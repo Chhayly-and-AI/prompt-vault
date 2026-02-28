@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Github, Search, CheckCircle2, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { useStorageActions } from "@/lib/storage-helpers";
 import { useStore } from "@/store/useStore";
-import { AssetType } from "@/schemas/models";
+import { AssetType, Asset } from "@/schemas/models";
 
 interface DetectedAsset {
   name: string;
@@ -19,7 +19,7 @@ export function GitHubWizard() {
   const [detected, setDetected] = useState<DetectedAsset[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
-  const { addAsset } = useStorageActions();
+  const { addAssetsBatch } = useStorageActions();
 
   const handleStartScan = async () => {
     if (!url.includes("github.com")) {
@@ -28,7 +28,6 @@ export function GitHubWizard() {
     }
     setStep("scan");
     
-    // Simulate discovery logic (Scanning for SKILL.md and .md files)
     setTimeout(() => {
       setDetected([
         { name: "Code Architect", type: "skill", content: "Architecture guidelines...", path: "skills/arch/SKILL.md" },
@@ -42,22 +41,22 @@ export function GitHubWizard() {
   const handleImport = () => {
     if (!activeWorkspaceId) return;
     
-    detected.forEach((asset, idx) => {
-      if (selectedIds.includes(idx) || selectedIds.length === 0) {
-        addAsset({
-          id: crypto.randomUUID(),
-          name: asset.name,
-          type: asset.type,
-          content: asset.content,
-          workspaceId: activeWorkspaceId,
-          tags: ["github-import"],
-          sourceUrl: url + "/blob/main/" + asset.path,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-      }
-    });
-    
+    const assetsToImport: Asset[] = detected
+      .filter((_, idx) => selectedIds.includes(idx) || selectedIds.length === 0)
+      .map(asset => ({
+        id: crypto.randomUUID(),
+        name: asset.name,
+        type: asset.type,
+        content: asset.content,
+        workspaceId: activeWorkspaceId,
+        tags: ["github-import"],
+        sourceUrl: url + "/blob/main/" + asset.path,
+        pinned: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }));
+
+    addAssetsBatch(assetsToImport);
     setStep("success");
   };
 

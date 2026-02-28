@@ -19,11 +19,15 @@ const idbStorage: StateStorage = {
 };
 
 interface AppState {
+  // Entities (Persisted)
   workspaces: Workspace[];
   assets: Asset[];
   conversations: Conversation[];
   activeWorkspaceId: string | null;
   activeConversationId: string | null;
+  
+  // UI State (Non-persisted)
+  _hasHydrated: boolean;
   
   // Actions
   setWorkspaces: (workspaces: Workspace[]) => void;
@@ -31,9 +35,6 @@ interface AppState {
   setConversations: (conversations: Conversation[]) => void;
   setActiveWorkspaceId: (id: string | null) => void;
   setActiveConversationId: (id: string | null) => void;
-  
-  // Hydration helper
-  _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
 }
 
@@ -45,19 +46,26 @@ export const useStore = create<AppState>()(
       conversations: [],
       activeWorkspaceId: null,
       activeConversationId: null,
+      _hasHydrated: false,
       
       setWorkspaces: (workspaces) => set({ workspaces }),
       setAssets: (assets) => set({ assets }),
       setConversations: (conversations) => set({ conversations }),
       setActiveWorkspaceId: (activeWorkspaceId) => set({ activeWorkspaceId }),
       setActiveConversationId: (activeConversationId) => set({ activeConversationId }),
-      
-      _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: "prompt-vault-storage",
       storage: createJSONStorage(() => idbStorage),
+      // ONLY persist entities and selection, EXCLUDE ephemeral UI state
+      partialize: (state) => ({
+        workspaces: state.workspaces,
+        assets: state.assets,
+        conversations: state.conversations,
+        activeWorkspaceId: state.activeWorkspaceId,
+        activeConversationId: state.activeConversationId,
+      }),
       onRehydrateStorage: (state) => {
         return () => state?.setHasHydrated(true);
       },
