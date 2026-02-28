@@ -15,7 +15,7 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
 
   // Resolve Mentions recursively with a depth guard
   const resolveAssets = (mentions: Mention[], depth = 0, visited = new Set<string>()): Asset[] => {
-    if (depth > 3) return []; // Recursion depth guard
+    if (depth > 3) return [];
     
     let resolved: Asset[] = [];
     mentions.forEach(m => {
@@ -25,10 +25,9 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
       const asset = assets.find(a => a.id === m.assetId);
       if (asset) {
         resolved.push(asset);
-        // Naive extraction of mentions from asset content for recursion
-        const subMentionNames = Array.from(asset.content.matchAll(/[\@\#\~]([\w-]+)/g)).map(match => match[1]);
+        const subMentionNames = Array.from(asset.content.matchAll(/[\@\#\~]([\w\s-]+)/g)).map(match => match[1].trim());
         const subMentions: Mention[] = assets
-          .filter(a => subMentionNames.includes(a.name) && a.workspaceId === asset.workspaceId)
+          .filter(a => subMentionNames.some(name => a.name.toLowerCase() === name.toLowerCase()) && a.workspaceId === asset.workspaceId)
           .map(a => ({ id: crypto.randomUUID(), type: a.type, name: a.name, assetId: a.id }));
         
         resolved = [...resolved, ...resolveAssets(subMentions, depth + 1, visited)];
@@ -41,15 +40,17 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const allMessages = activeConversation.messages;
   const structuredMentions = allMessages.flatMap(m => m.mentions);
   
-  // Also parse mentions from text content (fallback for manually typed mentions)
+  // Parse mentions from text content (fallback for manually typed mentions)
+  // Match @Name, #Name, ~Name where Name can have spaces (up to next punctuation or end)
   const textMentions: Mention[] = [];
   allMessages.forEach(msg => {
-    const textMentionMatches = Array.from(msg.content.matchAll(/[\@\#\~]([\w-]+)/g));
-    textMentionMatches.forEach(match => {
-      const name = match[1];
+    const matches = Array.from(msg.content.matchAll(/[\@\#\~]([A-Z][a-zA-Z0-9\s-]+)/g));
+    matches.forEach(match => {
+      const potentialName = match[1].trim();
+      // Try to find asset by name (case-insensitive)
       const asset = assets.find(a => 
-        a.name.toLowerCase() === name.toLowerCase() && 
-        a.workspaceId === activeConversation.workspaceId
+        a.name.toLowerCase() === potentialName.toLowerCase() && 
+        a.workspaceId === activeConversation!.workspaceId
       );
       if (asset && !structuredMentions.find(m => m.assetId === asset.id) && !textMentions.find(m => m.assetId === asset.id)) {
         textMentions.push({
@@ -65,7 +66,7 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const allMentions = [...structuredMentions, ...textMentions];
   const relevantAssets = [...new Set(resolveAssets(allMentions))];
 
-  const compiledOutput = `# COMPILED PROMPT\n\n${relevantAssets.map(a => `## ${a.type.toUpperCase()}: ${a.name}\n${a.content}`).join("\n\n")}\n\n## USER MESSAGE\n${allMessages.filter(m => m.role === 'user').pop()?.content || ""}`;
+  const compiledOutput = `# COMPILED PROMPT\n\n${relevantAssets.length > 0 ? relevantAssets.map(a => `## ${a.type.toUpperCase()}: ${a.name}\n${a.content}`).join("\n\n") + "\n\n" : ""}## USER MESSAGE\n${allMessages.filter(m => m.role === 'user').pop()?.content || ""}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(compiledOutput);
