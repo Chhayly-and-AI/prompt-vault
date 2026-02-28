@@ -9,6 +9,11 @@ export const useStorageActions = () => {
         assets: [...state.assets, asset],
       }));
     },
+    addAssetsBatch: (newAssets: Asset[]) => {
+      useStore.setState((state) => ({
+        assets: [...state.assets, ...newAssets],
+      }));
+    },
     updateAsset: (id: string, updates: Partial<Asset>) => {
       useStore.setState((state) => ({
         assets: state.assets.map((a) => (a.id === id ? { ...a, ...updates, updatedAt: Date.now() } : a)),
