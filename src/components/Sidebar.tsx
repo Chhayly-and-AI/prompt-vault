@@ -16,12 +16,16 @@ import {
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useStore } from "@/store/useStore";
 
+import type { AppView } from "@/types/navigation";
+
 type SidebarContentProps = {
   collapsed: boolean;
+  view: AppView;
+  setView: (view: AppView) => void;
   onAction?: () => void;
 };
 
-export function SidebarContent({ collapsed, onAction }: SidebarContentProps) {
+export function SidebarContent({ collapsed, view, setView, onAction }: SidebarContentProps) {
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const conversations = useStore((state) => state.conversations).filter((c) => c.workspaceId === activeWorkspaceId);
   const pinnedAssets = useStore((state) => state.assets).filter((a) => a.workspaceId === activeWorkspaceId && a.pinned);
@@ -47,7 +51,36 @@ export function SidebarContent({ collapsed, onAction }: SidebarContentProps) {
       </div>
 
       <nav className="scrollbar-hide flex-1 space-y-1 overflow-y-auto px-4 py-6">
-        <NavItem icon={Layers3} label="Library" collapsed={collapsed} active onClick={onAction} />
+        <NavItem 
+          icon={Layers3} 
+          label="Library" 
+          collapsed={collapsed} 
+          active={view === "library"} 
+          onClick={() => {
+            setView("library");
+            onAction?.();
+          }} 
+        />
+        <NavItem 
+          icon={MessageSquare} 
+          label="Chat" 
+          collapsed={collapsed} 
+          active={view === "chat"} 
+          onClick={() => {
+            setView("chat");
+            onAction?.();
+          }} 
+        />
+        <NavItem 
+          icon={Workflow} 
+          label="Import" 
+          collapsed={collapsed} 
+          active={view === "import"} 
+          onClick={() => {
+            setView("import");
+            onAction?.();
+          }} 
+        />
 
         {pinnedAssets.length > 0 && !collapsed && (
           <>
@@ -78,6 +111,7 @@ export function SidebarContent({ collapsed, onAction }: SidebarContentProps) {
             key={conv.id}
             onClick={() => {
               setActiveConversationId(conv.id);
+              setView("chat");
               onAction?.();
             }}
             className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-xs transition ${
@@ -106,7 +140,7 @@ export function SidebarContent({ collapsed, onAction }: SidebarContentProps) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ view, setView }: { view: AppView; setView: (view: AppView) => void }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -115,7 +149,7 @@ export function Sidebar() {
         collapsed ? "w-20" : "w-[280px]"
       }`}
     >
-      <SidebarContent collapsed={collapsed} />
+      <SidebarContent collapsed={collapsed} view={view} setView={setView} />
 
       <button
         onClick={() => setCollapsed(!collapsed)}
