@@ -12,9 +12,10 @@ import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { useStorageActions } from "@/lib/storage-helpers";
 import { exportWorkspace, downloadJSON } from "@/lib/portability/json-handler";
+import type { AppView } from "@/types/navigation";
 
 export default function Home() {
-  const [view, setView] = useState<"library" | "chat" | "import">("library");
+  const [view, setView] = useState<AppView>("library");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
