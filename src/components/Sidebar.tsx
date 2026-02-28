@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { 
   Compass, 
   Layers3, 
   Workflow, 
-  TerminalSquare, 
   MessageSquare,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Hash,
@@ -15,8 +13,14 @@ import {
 } from "lucide-react";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { useStore } from "@/store/useStore";
+import type { AppView } from "@/types/navigation";
 
-export function Sidebar() {
+interface SidebarProps {
+  view: AppView;
+  setView: (view: AppView) => void;
+}
+
+export function Sidebar({ view, setView }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const conversations = useStore((state) => state.conversations).filter(c => c.workspaceId === activeWorkspaceId);
@@ -47,7 +51,27 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto space-y-1 px-4 py-6 scrollbar-hide">
-        <NavItem icon={Layers3} label="Library" collapsed={collapsed} active />
+        <NavItem
+          icon={Layers3}
+          label="Library"
+          collapsed={collapsed}
+          isActive={view === "library"}
+          onClick={() => setView("library")}
+        />
+        <NavItem
+          icon={MessageSquare}
+          label="Chat"
+          collapsed={collapsed}
+          isActive={view === "chat"}
+          onClick={() => setView("chat")}
+        />
+        <NavItem
+          icon={Workflow}
+          label="Import"
+          collapsed={collapsed}
+          isActive={view === "import"}
+          onClick={() => setView("import")}
+        />
         
         {pinnedAssets.length > 0 && !collapsed && (
           <>
@@ -75,7 +99,10 @@ export function Sidebar() {
         {conversations.slice(0, 5).map(conv => (
           <button
             key={conv.id}
-            onClick={() => setActiveConversationId(conv.id)}
+            onClick={() => {
+              setActiveConversationId(conv.id);
+              setView("chat");
+            }}
             className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-xs transition ${
               activeConversationId === conv.id 
                 ? "bg-[rgba(104,166,255,0.1)] text-white" 
@@ -87,17 +114,7 @@ export function Sidebar() {
           </button>
         ))}
 
-        <div className="my-6 border-t border-[var(--line)]" />
-        <p className={`mb-2 px-2 text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)] ${collapsed ? "text-center" : ""}`}>
-          {collapsed ? "---" : "Categories"}
-        </p>
-        <NavItem icon={Workflow} label="Skills" collapsed={collapsed} />
-        <NavItem icon={TerminalSquare} label="Prompts" collapsed={collapsed} />
       </nav>
-
-      <div className="p-4 border-t border-[var(--line)]">
-         <NavItem icon={Settings} label="Settings" collapsed={collapsed} />
-      </div>
 
       <button 
         onClick={() => setCollapsed(!collapsed)}
@@ -109,16 +126,25 @@ export function Sidebar() {
   );
 }
 
-function NavItem({ icon: Icon, label, active, collapsed }: any) {
+interface NavItemProps {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  isActive?: boolean;
+  collapsed: boolean;
+  onClick?: () => void;
+}
+
+function NavItem({ icon: Icon, label, isActive = false, collapsed, onClick }: NavItemProps) {
   return (
     <button
+      onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-sm transition ${
-        active
+        isActive
           ? "border-[var(--line-strong)] bg-[rgba(24,35,53,0.62)] text-white"
           : "border-transparent bg-transparent text-[var(--text-muted)] hover:border-[var(--line)] hover:bg-[rgba(8,13,20,0.46)]"
       } ${collapsed ? "justify-center px-0" : ""}`}
     >
-      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-[var(--brand)]" : ""}`} />
+      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-[var(--brand)]" : ""}`} />
       {!collapsed && <span className="truncate">{label}</span>}
     </button>
   );
