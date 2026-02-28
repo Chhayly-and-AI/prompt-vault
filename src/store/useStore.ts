@@ -1,19 +1,24 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { get, set, del } from "idb-keyval";
 import type { StateStorage } from "zustand/middleware";
 import { Asset, Workspace, Conversation } from "@/schemas/models";
 
-// Custom storage for IndexedDB via idb-keyval
+// Client-side only storage wrapper
 const idbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
+    if (typeof window === 'undefined') return null;
+    const { get } = await import('idb-keyval');
     const value = await get(name);
     return value ? (typeof value === "string" ? value : JSON.stringify(value)) : null;
   },
   setItem: async (name: string, value: string): Promise<void> => {
+    if (typeof window === 'undefined') return;
+    const { set } = await import('idb-keyval');
     await set(name, value);
   },
   removeItem: async (name: string): Promise<void> => {
+    if (typeof window === 'undefined') return;
+    const { del } = await import('idb-keyval');
     await del(name);
   },
 };
@@ -26,7 +31,7 @@ interface AppState {
   activeWorkspaceId: string | null;
   activeConversationId: string | null;
   
-  // UI State (Non-persisted)
+  // UI State
   _hasHydrated: boolean;
   
   // Actions
@@ -53,12 +58,11 @@ export const useStore = create<AppState>()(
       setConversations: (conversations) => set({ conversations }),
       setActiveWorkspaceId: (activeWorkspaceId) => set({ activeWorkspaceId }),
       setActiveConversationId: (activeConversationId) => set({ activeConversationId }),
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
+      setHasHydrated: (_hasHydrated) => set({ _hasHydrated }),
     }),
     {
       name: "prompt-vault-storage",
       storage: createJSONStorage(() => idbStorage),
-      // ONLY persist entities and selection, EXCLUDE ephemeral UI state
       partialize: (state) => ({
         workspaces: state.workspaces,
         assets: state.assets,
@@ -66,9 +70,15 @@ export const useStore = create<AppState>()(
         activeWorkspaceId: state.activeWorkspaceId,
         activeConversationId: state.activeConversationId,
       }),
-      onRehydrateStorage: (state) => {
-        return () => state?.setHasHydrated(true);
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
       },
     }
   )
 );
+
+// Hook to check hydration status
+export const useHydration = () => {
+  const hasHydrated = useStore((state) => state._hasHydrated);
+  return hasHydrated;
+};

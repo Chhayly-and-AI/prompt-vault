@@ -26,7 +26,7 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
       if (asset) {
         resolved.push(asset);
         // Naive extraction of mentions from asset content for recursion
-        const subMentionNames = Array.from(asset.content.matchAll(/[\\@\\#\\~]([\\w-]+)/g)).map(match => match[1]);
+        const subMentionNames = Array.from(asset.content.matchAll(/[\@\#\~]([\w-]+)/g)).map(match => match[1]);
         const subMentions: Mention[] = assets
           .filter(a => subMentionNames.includes(a.name) && a.workspaceId === asset.workspaceId)
           .map(a => ({ id: crypto.randomUUID(), type: a.type, name: a.name, assetId: a.id }));
@@ -37,10 +37,35 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
     return resolved;
   };
 
-  const allMentions = activeConversation.messages.flatMap(m => m.mentions);
+  // Get all mentions from structured mentions AND parse from text as fallback
+  const allMessages = activeConversation.messages;
+  const structuredMentions = allMessages.flatMap(m => m.mentions);
+  
+  // Also parse mentions from text content (fallback for manually typed mentions)
+  const textMentions: Mention[] = [];
+  allMessages.forEach(msg => {
+    const textMentionMatches = Array.from(msg.content.matchAll(/[\@\#\~]([\w-]+)/g));
+    textMentionMatches.forEach(match => {
+      const name = match[1];
+      const asset = assets.find(a => 
+        a.name.toLowerCase() === name.toLowerCase() && 
+        a.workspaceId === activeConversation.workspaceId
+      );
+      if (asset && !structuredMentions.find(m => m.assetId === asset.id) && !textMentions.find(m => m.assetId === asset.id)) {
+        textMentions.push({
+          id: crypto.randomUUID(),
+          type: asset.type,
+          name: asset.name,
+          assetId: asset.id,
+        });
+      }
+    });
+  });
+
+  const allMentions = [...structuredMentions, ...textMentions];
   const relevantAssets = [...new Set(resolveAssets(allMentions))];
 
-  const compiledOutput = `# COMPILED PROMPT\n\n${relevantAssets.map(a => `## ${a.type.toUpperCase()}: ${a.name}\n${a.content}`).join("\n\n")}\n\n## USER MESSAGE\n${activeConversation.messages.filter(m => m.role === 'user').pop()?.content || ""}`;
+  const compiledOutput = `# COMPILED PROMPT\n\n${relevantAssets.map(a => `## ${a.type.toUpperCase()}: ${a.name}\n${a.content}`).join("\n\n")}\n\n## USER MESSAGE\n${allMessages.filter(m => m.role === 'user').pop()?.content || ""}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(compiledOutput);
@@ -49,14 +74,14 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" role="dialog" aria-modal="true">
       <div className="cc-glass w-full max-w-3xl max-h-[80vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl border-[var(--line-strong)]">
         <div className="flex items-center justify-between p-6 border-b border-[var(--line)]">
            <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-[var(--brand)]" />
               <h2 className="text-xl font-semibold text-white">Compiled System Prompt</h2>
            </div>
-           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white"><X className="h-5 w-5" /></button>
+           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white" aria-label="Close"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-[rgba(0,0,0,0.2)]">

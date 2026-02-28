@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Plus, MessageSquare, Layers3, Download, FolderGit2 } from "lucide-react";
-import { useStore } from "@/store/useStore";
+import { useStore, useHydration } from "@/store/useStore";
 import { AssetList } from "@/features/assets/components/AssetList";
 import { CreateAssetModal } from "@/features/assets/components/CreateAssetModal";
 import { ChatInterface } from "@/features/chat/components/ChatInterface";
 import { GitHubWizard } from "@/features/import/components/GitHubWizard";
+import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { useStorageActions } from "@/lib/storage-helpers";
 import { exportWorkspace, downloadJSON } from "@/lib/portability/json-handler";
 
@@ -17,6 +18,7 @@ export default function Home() {
   
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
+  const hasHydrated = useHydration();
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
   
   const { addConversation } = useStorageActions();
@@ -44,6 +46,29 @@ export default function Home() {
        downloadJSON(data, `pv-export-${activeWorkspace?.name.toLowerCase().replace(/\s+/g, '-')}.json`);
     }
   };
+
+  // Show loading state
+  if (!hasHydrated) {
+    return (
+      <div className="cc-shell flex h-screen items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="h-8 w-8 rounded-lg bg-[var(--brand-soft)] animate-pulse mx-auto" />
+          <p className="text-xs text-[var(--text-muted)]">Loading vault...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show welcome screen if no workspace
+  if (!activeWorkspaceId) {
+    return (
+      <main className="cc-shell cc-grid-bg flex h-screen overflow-hidden text-[var(--text)]">
+        <div className="flex-1">
+          <WelcomeScreen />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="cc-shell cc-grid-bg flex h-screen overflow-hidden text-[var(--text)]">
@@ -101,11 +126,7 @@ export default function Home() {
 
         {/* Dynamic View Area */}
         <div className="flex-1 overflow-hidden p-6">
-           {!activeWorkspaceId ? (
-             <div className="cc-glass flex h-full flex-col items-center justify-center rounded-3xl border-dashed opacity-50">
-                <p className="text-sm text-[var(--text-muted)]">Please select a workspace to continue.</p>
-             </div>
-           ) : view === "library" ? (
+           {view === "library" ? (
              <AssetList />
            ) : view === "chat" ? (
              <ChatInterface />
