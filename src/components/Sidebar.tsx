@@ -9,12 +9,18 @@ import {
   MessageSquare,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Hash
 } from "lucide-react";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import { useStore } from "@/store/useStore";
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
+  const conversations = useStore((state) => state.conversations).filter(c => c.workspaceId === activeWorkspaceId);
+  const activeConversationId = useStore((state) => state.activeConversationId);
+  const setActiveConversationId = useStore((state) => state.setActiveConversationId);
 
   return (
     <aside 
@@ -38,12 +44,32 @@ export function Sidebar() {
         <WorkspaceSwitcher collapsed={collapsed} />
       </div>
 
-      <nav className="flex-1 space-y-2 px-4 py-6">
-        <NavItem icon={Layers3} label="Library" active collapsed={collapsed} />
-        <NavItem icon={MessageSquare} label="Chats" collapsed={collapsed} />
-        <div className="my-4 border-t border-[var(--line)]" />
+      <nav className="flex-1 overflow-y-auto space-y-1 px-4 py-6 scrollbar-hide">
+        <NavItem icon={Layers3} label="Library" collapsed={collapsed} />
+        
+        <div className="mt-8 mb-2 px-2 flex items-center justify-between">
+          <p className={`text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)] ${collapsed ? "hidden" : ""}`}>Recent Chats</p>
+          {!collapsed && <MessageSquare className="h-3 w-3 text-[var(--text-muted)] opacity-50" />}
+        </div>
+        
+        {conversations.slice(0, 5).map(conv => (
+          <button
+            key={conv.id}
+            onClick={() => setActiveConversationId(conv.id)}
+            className={`flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-xs transition ${
+              activeConversationId === conv.id 
+                ? "bg-[rgba(104,166,255,0.1)] text-white" 
+                : "text-[var(--text-muted)] hover:bg-[rgba(255,255,255,0.03)]"
+            } ${collapsed ? "justify-center" : ""}`}
+          >
+            <Hash className="h-3.5 w-3.5 shrink-0 opacity-50" />
+            {!collapsed && <span className="truncate">{conv.title}</span>}
+          </button>
+        ))}
+
+        <div className="my-6 border-t border-[var(--line)]" />
         <p className={`mb-2 px-2 text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)] ${collapsed ? "text-center" : ""}`}>
-          {collapsed ? "---" : "Assets"}
+          {collapsed ? "---" : "Categories"}
         </p>
         <NavItem icon={Workflow} label="Skills" collapsed={collapsed} />
         <NavItem icon={TerminalSquare} label="Prompts" collapsed={collapsed} />
