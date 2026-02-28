@@ -11,9 +11,10 @@ import { GitHubWizard } from "@/features/import/components/GitHubWizard";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { useStorageActions } from "@/lib/storage-helpers";
 import { exportWorkspace, downloadJSON } from "@/lib/portability/json-handler";
+import type { AppView } from "@/types/navigation";
 
 export default function Home() {
-  const [view, setView] = useState<"library" | "chat" | "import">("library");
+  const [view, setView] = useState<AppView>("library");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
@@ -72,7 +73,7 @@ export default function Home() {
 
   return (
     <main className="cc-shell cc-grid-bg flex h-screen overflow-hidden text-[var(--text)]">
-      <Sidebar />
+      <Sidebar view={view} setView={setView} />
 
       {/* Main Content Area */}
       <div className="flex min-w-0 flex-1 flex-col">
