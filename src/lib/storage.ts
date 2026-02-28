@@ -12,7 +12,7 @@ export async function updatePrompt(prompt: PromptItem): Promise<void> {
 export async function getAllPrompts(): Promise<PromptItem[]> {
   const allKeys = await keys();
   const prompts = await Promise.all(allKeys.map(key => get<PromptItem>(key)));
-  return prompts.filter((p): p is PromptItem => !!p);
+  return prompts.filter((p): p is PromptItem => !!p && typeof p.name === 'string' && typeof p.id === 'string');
 }
 
 export async function deletePrompt(id: string): Promise<void> {

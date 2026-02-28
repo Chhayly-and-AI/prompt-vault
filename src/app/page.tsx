@@ -96,9 +96,10 @@ export default function Home() {
   };
 
   const filteredPrompts = prompts.filter((p) => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.content.toLowerCase().includes(searchQuery.toLowerCase());
+      (p.name ?? "").toLowerCase().includes(query) ||
+      (p.content ?? "").toLowerCase().includes(query);
     const matchesCategory = activeCategory === "all" || p.type === activeCategory;
     return matchesSearch && matchesCategory;
   });
@@ -169,8 +170,8 @@ export default function Home() {
                       setSidebarOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive
-                        ? "bg-accent-500/10 text-accent-400 border border-accent-500/20"
-                        : "text-surface-400 hover:text-surface-100 hover:bg-surface-800/40 border border-transparent"
+                      ? "bg-accent-500/10 text-accent-400 border border-accent-500/20"
+                      : "text-surface-400 hover:text-surface-100 hover:bg-surface-800/40 border border-transparent"
                       }`}
                   >
                     <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-accent-400" : "text-surface-500 group-hover:text-surface-300"}`} />
@@ -193,16 +194,16 @@ export default function Home() {
                     key={item.id}
                     onClick={() => setActiveCategory(item.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${isActive
-                        ? "text-accent-400"
-                        : "text-surface-400 hover:text-surface-100 hover:bg-surface-800/40"
+                      ? "text-accent-400"
+                      : "text-surface-400 hover:text-surface-100 hover:bg-surface-800/40"
                       }`}
                   >
                     <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-accent-400" : "text-surface-500 group-hover:text-surface-300"}`} />
                     <span className={`flex-1 text-left ${!sidebarOpen ? "lg:hidden" : ""}`}>{item.label}</span>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive
-                          ? "bg-accent-500/15 text-accent-400"
-                          : "bg-surface-800 text-surface-500"
+                        ? "bg-accent-500/15 text-accent-400"
+                        : "bg-surface-800 text-surface-500"
                         } ${!sidebarOpen ? "lg:hidden" : ""}`}
                     >
                       {item.count}
@@ -497,10 +498,10 @@ function CreatePromptModal({
                   type="button"
                   onClick={() => setType(t)}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all ${type === t
-                      ? t === "prompt"
-                        ? "bg-sky-500/10 border-sky-500/30 text-sky-400"
-                        : "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                      : "bg-surface-900/40 border-surface-800/50 text-surface-400 hover:text-surface-200 hover:bg-surface-800/40"
+                    ? t === "prompt"
+                      ? "bg-sky-500/10 border-sky-500/30 text-sky-400"
+                      : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                    : "bg-surface-900/40 border-surface-800/50 text-surface-400 hover:text-surface-200 hover:bg-surface-800/40"
                     }`}
                 >
                   {t === "prompt" ? <FileText className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
