@@ -70,7 +70,7 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
               <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest">
                 {relevantAssets.length} Assets in context
               </p>
-              {relevantAssets.length > 10 && <AlertTriangle className="h-3 w-3 text-[var(--warn)]" title="Large context detected" />}
+              {relevantAssets.length > 10 && <span title="Large context detected"><AlertTriangle className="h-3 w-3 text-[var(--warn)]" /></span>}
            </div>
            <button 
              onClick={handleCopy}
