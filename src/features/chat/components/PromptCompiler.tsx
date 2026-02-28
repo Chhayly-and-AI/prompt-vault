@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useStore } from "@/store/useStore";
-import { FileText, Copy, CheckCircle2, X } from "lucide-react";
-import { Asset } from "@/schemas/models";
+import { FileText, Copy, CheckCircle2, X, AlertTriangle } from "lucide-react";
+import { Asset, Mention } from "@/schemas/models";
 
 export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const activeConversationId = useStore((state) => state.activeConversationId);
@@ -13,12 +13,32 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
 
   if (!isOpen || !activeConversation) return null;
 
-  // Extract mentioned assets from messages (naive regex for demo)
-  const allContent = activeConversation.messages.map(m => m.content).join("\n");
-  const mentionedAssetNames = Array.from(allContent.matchAll(/[\@\#\~]([\w-]+)/g)).map(m => m[1]);
-  const uniqueMentions = [...new Set(mentionedAssetNames)];
-  
-  const relevantAssets = assets.filter(a => uniqueMentions.includes(a.name));
+  // Resolve Mentions recursively with a depth guard
+  const resolveAssets = (mentions: Mention[], depth = 0, visited = new Set<string>()): Asset[] => {
+    if (depth > 3) return []; // Recursion depth guard
+    
+    let resolved: Asset[] = [];
+    mentions.forEach(m => {
+      if (visited.has(m.assetId)) return;
+      visited.add(m.assetId);
+      
+      const asset = assets.find(a => a.id === m.assetId);
+      if (asset) {
+        resolved.push(asset);
+        // Naive extraction of mentions from asset content for recursion
+        const subMentionNames = Array.from(asset.content.matchAll(/[\\@\\#\\~]([\\w-]+)/g)).map(match => match[1]);
+        const subMentions: Mention[] = assets
+          .filter(a => subMentionNames.includes(a.name) && a.workspaceId === asset.workspaceId)
+          .map(a => ({ id: crypto.randomUUID(), type: a.type, name: a.name, assetId: a.id }));
+        
+        resolved = [...resolved, ...resolveAssets(subMentions, depth + 1, visited)];
+      }
+    });
+    return resolved;
+  };
+
+  const allMentions = activeConversation.messages.flatMap(m => m.mentions);
+  const relevantAssets = [...new Set(resolveAssets(allMentions))];
 
   const compiledOutput = `# COMPILED PROMPT\n\n${relevantAssets.map(a => `## ${a.type.toUpperCase()}: ${a.name}\n${a.content}`).join("\n\n")}\n\n## USER MESSAGE\n${activeConversation.messages.filter(m => m.role === 'user').pop()?.content || ""}`;
 
@@ -46,9 +66,12 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
         </div>
 
         <div className="p-6 border-t border-[var(--line)] flex justify-between items-center">
-           <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest">
-             {relevantAssets.length} Assets included in context
-           </p>
+           <div className="flex items-center gap-2">
+              <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest">
+                {relevantAssets.length} Assets in context
+              </p>
+              {relevantAssets.length > 10 && <AlertTriangle className="h-3 w-3 text-[var(--warn)]" title="Large context detected" />}
+           </div>
            <button 
              onClick={handleCopy}
              className="cc-btn-primary px-6 py-2.5 flex items-center gap-2 text-sm font-medium"
