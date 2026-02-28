@@ -25,12 +25,19 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
       const asset = assets.find(a => a.id === m.assetId);
       if (asset) {
         resolved.push(asset);
-        const subMentionNames = Array.from(asset.content.matchAll(/[\@\#\~]([\w\s-]+)/g)).map(match => match[1].trim());
-        const subMentions: Mention[] = assets
-          .filter(a => subMentionNames.some(name => a.name.toLowerCase() === name.toLowerCase()) && a.workspaceId === asset.workspaceId)
-          .map(a => ({ id: crypto.randomUUID(), type: a.type, name: a.name, assetId: a.id }));
-        
-        resolved = [...resolved, ...resolveAssets(subMentions, depth + 1, visited)];
+        // Find mentions in asset content by checking against asset names
+        const workspaceAssets = assets.filter(a => a.workspaceId === asset.workspaceId);
+        workspaceAssets.forEach(nestedAsset => {
+          const trigger = nestedAsset.type === "skill" ? "@" : nestedAsset.type === "prompt" ? "#" : "~";
+          if (asset.content.includes(`${trigger}${nestedAsset.name}`)) {
+            resolved = [...resolved, ...resolveAssets([{
+              id: crypto.randomUUID(),
+              type: nestedAsset.type,
+              name: nestedAsset.name,
+              assetId: nestedAsset.id,
+            }], depth + 1, visited)];
+          }
+        });
       }
     });
     return resolved;
@@ -40,19 +47,19 @@ export function PromptCompiler({ isOpen, onClose }: { isOpen: boolean; onClose: 
   const allMessages = activeConversation.messages;
   const structuredMentions = allMessages.flatMap(m => m.mentions);
   
-  // Parse mentions from text content (fallback for manually typed mentions)
-  // Match @Name, #Name, ~Name where Name can have spaces (up to next punctuation or end)
+  // Parse mentions from text content by checking against actual asset names
   const textMentions: Mention[] = [];
+  const workspaceAssets = assets.filter(a => a.workspaceId === activeConversation.workspaceId);
+  
   allMessages.forEach(msg => {
-    const matches = Array.from(msg.content.matchAll(/[\@\#\~]([A-Z][a-zA-Z0-9\s-]+)/g));
-    matches.forEach(match => {
-      const potentialName = match[1].trim();
-      // Try to find asset by name (case-insensitive)
-      const asset = assets.find(a => 
-        a.name.toLowerCase() === potentialName.toLowerCase() && 
-        a.workspaceId === activeConversation!.workspaceId
-      );
-      if (asset && !structuredMentions.find(m => m.assetId === asset.id) && !textMentions.find(m => m.assetId === asset.id)) {
+    workspaceAssets.forEach(asset => {
+      const trigger = asset.type === "skill" ? "@" : asset.type === "prompt" ? "#" : "~";
+      const mentionStr = `${trigger}${asset.name}`;
+      
+      // Check if this mention exists in the message
+      if (msg.content.includes(mentionStr) && 
+          !structuredMentions.find(m => m.assetId === asset.id) && 
+          !textMentions.find(m => m.assetId === asset.id)) {
         textMentions.push({
           id: crypto.randomUUID(),
           type: asset.type,
