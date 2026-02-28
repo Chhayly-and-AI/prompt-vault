@@ -4,12 +4,14 @@ import { useStore } from "@/store/useStore";
 import { Asset } from "@/schemas/models";
 import { Workflow, TerminalSquare, Box, MoreVertical, Search } from "lucide-react";
 import { useState, useMemo } from "react";
+import { AssetDrawer } from "./AssetDrawer";
 
 export function AssetList() {
   const assets = useStore((state) => state.assets);
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "skill" | "prompt" | "workflow">("all");
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   const filteredAssets = useMemo(() => {
     return assets.filter((asset) => {
@@ -56,10 +58,17 @@ export function AssetList() {
           </div>
         ) : (
           filteredAssets.map((asset) => (
-            <AssetItem key={asset.id} asset={asset} />
+            <div key={asset.id} onClick={() => setSelectedAsset(asset)}>
+               <AssetItem asset={asset} />
+            </div>
           ))
         )}
       </div>
+
+      <AssetDrawer 
+        asset={selectedAsset} 
+        onClose={() => setSelectedAsset(null)} 
+      />
     </div>
   );
 }
