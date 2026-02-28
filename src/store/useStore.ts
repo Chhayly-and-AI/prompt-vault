@@ -8,10 +8,10 @@ import { Asset, Workspace, Conversation } from "@/schemas/models";
 const idbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     const value = await get(name);
-    return value ? JSON.stringify(value) : null;
+    return value ? (typeof value === "string" ? value : JSON.stringify(value)) : null;
   },
   setItem: async (name: string, value: string): Promise<void> => {
-    await set(name, JSON.parse(value));
+    await set(name, value);
   },
   removeItem: async (name: string): Promise<void> => {
     await del(name);
