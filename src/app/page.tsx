@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { Plus, MessageSquare, Layers3 } from "lucide-react";
+import { Plus, MessageSquare, Layers3, Download } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { AssetList } from "@/features/assets/components/AssetList";
 import { CreateAssetModal } from "@/features/assets/components/CreateAssetModal";
 import { ChatInterface } from "@/features/chat/components/ChatInterface";
 import { useStorageActions } from "@/lib/storage-helpers";
+import { exportWorkspace, downloadJSON } from "@/lib/portability/json-handler";
 
 export default function Home() {
   const [view, setView] = useState<"library" | "chat">("library");
@@ -16,6 +17,7 @@ export default function Home() {
   const activeWorkspaceId = useStore((state) => state.activeWorkspaceId);
   const workspaces = useStore((state) => state.workspaces);
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+  const store = useStore.getState();
   
   const { addConversation } = useStorageActions();
   const setActiveConversationId = useStore((state) => state.setActiveConversationId);
@@ -33,6 +35,14 @@ export default function Home() {
     addConversation(newConv);
     setActiveConversationId(newConv.id);
     setView("chat");
+  };
+
+  const handleExport = () => {
+    if (!activeWorkspaceId) return;
+    const data = exportWorkspace(activeWorkspaceId, useStore.getState());
+    if (data) {
+       downloadJSON(data, `pv-export-${activeWorkspace?.name.toLowerCase().replace(/\s+/g, '-')}.json`);
+    }
   };
 
   return (
@@ -64,6 +74,13 @@ export default function Home() {
              </div>
           </div>
           <div className="flex items-center gap-3">
+             <button 
+               onClick={handleExport}
+               className="cc-btn-secondary flex items-center gap-2 px-3 py-1.5 text-xs font-medium"
+               title="Export Workspace JSON"
+             >
+               <Download className="h-3.5 w-3.5" />
+             </button>
              <button onClick={handleNewConversation} className="cc-btn-secondary flex items-center gap-2 px-3 py-1.5 text-xs font-medium">
                <Plus className="h-3.5 w-3.5" /> New Chat
              </button>
