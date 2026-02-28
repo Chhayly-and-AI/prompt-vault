@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-inter: var(--font-inter);
+  --font-geist-sans: var(--font-geist-sans);
+  --font-geist-mono: var(--font-geist-mono);
 }
 
 @layer base {
@@ -38,7 +39,7 @@
 
   body {
     color: var(--text);
-    font-family: var(--font-sans);
+    font-family: var(--font-geist-sans), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
     background:
       radial-gradient(circle at 10% -10%, rgba(80, 142, 255, 0.2), transparent 38%),
       radial-gradient(circle at 92% 0%, rgba(48, 104, 220, 0.18), transparent 36%),
@@ -52,7 +53,7 @@
   code,
   pre,
   kbd {
-    font-family: var(--font-mono);
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 
   a {
