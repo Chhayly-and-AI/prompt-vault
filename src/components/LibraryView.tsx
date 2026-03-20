@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PromptItem } from "@/types";
 import {
   Copy,
@@ -16,6 +16,8 @@ import {
   Maximize2,
   Edit3,
   Save,
+  Keyboard,
+  Play,
 } from "lucide-react";
 import { deletePrompt } from "@/lib/storage";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,6 +36,37 @@ export default function LibraryView({ prompts, onRefresh, onEdit }: LibraryViewP
   const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [editNameValue, setEditNameValue] = useState("");
+  const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+  const [variables, setVariables] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (selectedPrompt) {
+      // Find all unique matches for {{variable}}
+      const matches = Array.from(selectedPrompt.content.matchAll(/\{\{([^}]+)\}\}/g));
+      const found = matches.map((m) => m[1].trim());
+      const unique = Array.from(new Set(found));
+      setVariables(unique);
+
+      // Initialize with empty strings
+      const initialValues: Record<string, string> = {};
+      unique.forEach((v) => (initialValues[v] = ""));
+      setVariableValues(initialValues);
+    } else {
+      setVariables([]);
+      setVariableValues({});
+    }
+  }, [selectedPrompt]);
+
+  const getInjectedContent = () => {
+    if (!selectedPrompt) return "";
+    let content = selectedPrompt.content;
+    variables.forEach((v) => {
+      const value = variableValues[v] || `{{${v}}}`;
+      // Basic escaping and replacement
+      content = content.split(`{{${v}}}`).join(value);
+    });
+    return content;
+  };
 
   const handleCopy = (content: string, id: string) => {
     navigator.clipboard.writeText(content);
@@ -279,7 +312,7 @@ export default function LibraryView({ prompts, onRefresh, onEdit }: LibraryViewP
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => handleCopy(selectedPrompt.content, selectedPrompt.id)}
+                    onClick={() => handleCopy(getInjectedContent(), selectedPrompt.id)}
                     className="flex items-center gap-2 px-4 py-2 gradient-accent hover:opacity-90 text-white rounded-xl text-sm font-semibold transition-all active:scale-95"
                   >
                     {copyStatus === selectedPrompt.id ? (
@@ -303,11 +336,48 @@ export default function LibraryView({ prompts, onRefresh, onEdit }: LibraryViewP
 
               {/* Modal Content */}
               <div className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-4xl mx-auto space-y-6">
+                <div className="max-w-4xl mx-auto space-y-8">
+                  {/* Playground Section */}
+                  {variables.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-surface-400 uppercase tracking-widest">
+                        <Keyboard className="h-3.5 w-3.5 text-amber-500" />
+                        Variable Playground
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {variables.map((v) => (
+                          <div key={v} className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-surface-500 uppercase tracking-tighter ml-1">
+                              {v}
+                            </label>
+                            <input
+                              type="text"
+                              placeholder={`Enter value for ${v}...`}
+                              value={variableValues[v] || ""}
+                              onChange={(e) =>
+                                setVariableValues((prev) => ({ ...prev, [v]: e.target.value }))
+                              }
+                              className="w-full bg-surface-900 border border-surface-800 rounded-xl px-4 py-2.5 text-sm text-surface-100 placeholder:text-surface-600 focus:outline-none focus:ring-1 focus:ring-amber-500/30 focus:border-amber-500/50 transition-all"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preview Section */}
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-surface-400 uppercase tracking-widest">
-                      <Code className="h-3.5 w-3.5 text-accent-400" />
-                      Content
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-surface-400 uppercase tracking-widest">
+                        <Code className="h-3.5 w-3.5 text-accent-400" />
+                        {variables.length > 0 ? "Live Preview" : "Content"}
+                      </div>
+                      {variables.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-[10px] text-amber-500/80 font-medium bg-amber-500/5 px-2 py-0.5 rounded-full border border-amber-500/10">
+                          <Play className="h-2.5 w-2.5" />
+                          Variables Active
+                        </div>
+                      )}
                     </div>
                     <div className="rounded-xl overflow-hidden border border-surface-800/50 bg-surface-950/60">
                       <SyntaxHighlighter
@@ -321,7 +391,7 @@ export default function LibraryView({ prompts, onRefresh, onEdit }: LibraryViewP
                           margin: 0,
                         }}
                       >
-                        {selectedPrompt.content}
+                        {getInjectedContent()}
                       </SyntaxHighlighter>
                     </div>
                   </div>
