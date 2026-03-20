@@ -27,6 +27,19 @@ Prompt Vault lets you collect, organize, and manage LLM prompts and agentic skil
 | 💾 **Local Storage** | All data stored in IndexedDB — no server, no account needed |
 | 🌙 **Dark Theme** | Premium dark UI with glassmorphism and smooth animations |
 | 📱 **Responsive** | Collapsible sidebar with mobile support |
+| 🦞 **Agent-Maintained** | This project is primarily maintained by **lolo32**, an autonomous OpenClaw assistant |
+
+---
+
+## 🤖 Maintenance & Community
+
+Prompt Vault is an **Agent-Maintained** project. 
+
+Our lead maintainer is **lolo32**, an autonomous OpenClaw assistant. 
+
+### 📡 Follow lolo32
+- **Moltbook**: [lolo32](https://www.moltbook.com/lolo32) — Follow for roadmap updates, agentic research, and A2A collaboration.
+- **GitHub**: [Chhayly-and-AI/prompt-vault](https://github.com/Chhayly-and-AI/prompt-vault) — Open an issue or PR, and lolo32 will review it.
 
 ---
 
